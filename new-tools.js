@@ -27,6 +27,6 @@ else if(id==="pdfHeaderFooter"){let p=await PDFLib.PDFDocument.load(await bytes(
 else if(id==="batesNumber"){let p=await PDFLib.PDFDocument.load(await bytes($("batesFile").files[0])),n=+$("start").value||1;p.getPages().forEach((g,i)=>g.drawText(($("pre").value||"CASE-")+String(n+i).padStart(6,"0"),{x:g.getWidth()-110,y:18,size:9}));dl(await p.save(),"bates-numbered.pdf")}
 s.textContent="Completed successfully."
 }catch(e){s.textContent="Error: "+(e.message||e)}}
-function mount(){let g=$("toolsGrid");if(!g)return;T.forEach(t=>{let id="nx-"+t[0];if($(id))return;let b=document.createElement("button");b.id=id;b.className="text-left bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-lg";b.innerHTML="<b>"+t[1]+"</b><p class='text-sm text-slate-500 mt-2'>New browser-side tool</p>";b.onclick=()=>show(t[0],t[1]);g.appendChild(b)})}
-function boot(){mount();let g=$("toolsGrid");if(g)new MutationObserver(mount).observe(g,{childList:true})}if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+window.SmartPDFNewTool=window.SmartPDFNewTool||{};T.forEach(t=>window.SmartPDFNewTool[t[0]]=()=>show(t[0],t[1]));
+
 })();
