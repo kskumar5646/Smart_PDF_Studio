@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://karnkumar5646.github.io/Smart_PDF_Studio/sitemap.xml
+Sitemap: https://smart-pdf-studio.shantanukumar5646.workers.dev/sitemap.xml
