@@ -321,6 +321,28 @@ header.sticky #headerTitle{font-size:18px!important;font-weight:800!important;co
   .smart-hero-art{opacity:.35;right:-210px}
 }
 </style>
+
+<style>
+/* SAFE MOBILE PORTRAIT FIX */
+@media (max-width:760px) and (orientation:portrait){
+  body{overflow-x:hidden!important}
+  header.sticky{width:100%!important}
+  header.sticky>div{width:100%!important;max-width:none!important;box-sizing:border-box!important;padding:0 14px!important}
+  #hero>div:first-child{box-sizing:border-box!important;width:calc(100% - 28px)!important;height:auto!important;min-height:210px!important;padding:28px 20px!important}
+  #hero>div:first-child h1,#hero>div:first-child p{max-width:100%!important;position:relative;z-index:6}
+  #hero>div:first-child h1{font-size:27px!important;line-height:1.12!important}
+  #hero>div:first-child p{font-size:14px!important;line-height:1.45!important}
+  .smart-hero-art{display:none!important}
+  #toolsGrid{box-sizing:border-box!important;width:calc(100% - 28px)!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+  #toolsGrid>button{box-sizing:border-box!important;min-width:0!important;min-height:150px!important;padding:16px!important}
+  #toolsGrid>button h3{font-size:16px!important;overflow-wrap:anywhere!important}
+  #toolsGrid>button p{font-size:12.5px!important;overflow-wrap:anywhere!important}
+}
+@media (max-width:520px) and (orientation:portrait){
+  #toolsGrid{grid-template-columns:1fr!important;gap:12px!important}
+  #toolsGrid>button{min-height:132px!important}
+}
+</style>
 </head>
 <body>
 <div id="root"></div>
