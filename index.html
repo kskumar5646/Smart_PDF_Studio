@@ -62,9 +62,10 @@ header.sticky #headerTitle{font-size:18px!important;font-weight:800!important;co
   line-height:1.45!important;color:#30496e!important;
 }
 #hero>div:first-child h1 .sp-pdf-word{color:#3d72e7}
-.smart-hero-art{position:absolute;right:30px;top:2px;width:500px;height:168px;z-index:4;pointer-events:none}
+.smart-hero-art{position:absolute;right:22px;top:2px;width:570px;height:168px;z-index:4;pointer-events:none}
+.smart-hero-art:before{content:"";position:absolute;right:20px;top:10px;width:350px;height:145px;border-radius:50%;background:radial-gradient(circle at 52% 48%,rgba(255,255,255,.96) 0 28%,rgba(226,236,255,.70) 29% 55%,rgba(238,244,255,.18) 56% 72%,transparent 73%);}
 .smart-pdf-card{
-  position:absolute;right:108px;top:38px;width:78px;height:102px;border-radius:9px;
+  position:absolute;right:115px;top:38px;width:82px;height:106px;border-radius:9px;
   background:linear-gradient(145deg,#ff6666,#ed3f46);box-shadow:0 15px 28px rgba(239,68,68,.22);
   color:#fff;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:900;
   transform:rotate(-1deg);
@@ -72,12 +73,12 @@ header.sticky #headerTitle{font-size:18px!important;font-weight:800!important;co
 .smart-pdf-card:before{content:"";position:absolute;left:15px;top:27px;width:42px;height:42px;border:3px solid rgba(255,255,255,.9);border-radius:50%}
 .smart-pdf-card:after{content:"";position:absolute;left:33px;top:37px;width:9px;height:27px;border-left:3px solid #fff;border-bottom:3px solid #fff;transform:rotate(-35deg)}
 .smart-float{position:absolute;display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:9px;box-shadow:0 5px 13px rgba(15,23,42,.12);font-size:18px}
-.smart-float.w{right:218px;top:25px;width:38px;height:38px;background:#1570d2;color:#fff;transform:rotate(-8deg)}
-.smart-float.x{right:28px;top:25px;width:38px;height:38px;background:#16a34a;color:#fff;transform:rotate(7deg)}
-.smart-float.i{right:228px;top:99px;width:35px;height:35px;background:#9b35ca;color:#fff;transform:rotate(-8deg)}
-.smart-float.j{right:8px;top:87px;width:38px;height:38px;background:#f4b400;color:#fff;transform:rotate(8deg)}
+.smart-float.w{right:246px;top:20px;width:38px;height:38px;background:#1570d2;color:#fff;transform:rotate(-8deg)}
+.smart-float.x{right:37px;top:20px;width:38px;height:38px;background:#16a34a;color:#fff;transform:rotate(7deg)}
+.smart-float.i{right:267px;top:94px;width:35px;height:35px;background:#9b35ca;color:#fff;transform:rotate(-8deg)}
+.smart-float.j{right:18px;top:88px;width:38px;height:38px;background:#f4b400;color:#fff;transform:rotate(8deg)}
 .smart-hand{
-  position:absolute;right:285px;top:52px;width:150px;text-align:center;color:#163e87;
+  position:absolute;right:350px;top:48px;width:155px;text-align:center;color:#163e87;
   font-family:"Comic Sans MS","Segoe Print",cursive;font-size:17px;line-height:1.12;
   transform:rotate(-4deg);
 }
@@ -102,12 +103,12 @@ header.sticky #headerTitle{font-size:18px!important;font-weight:800!important;co
 }
 #toolsGrid>button>div{display:block!important}
 #toolsGrid>button>div>div:first-child{
-  width:46px!important;height:46px!important;margin:0 0 12px!important;border-radius:12px!important;
+  width:48px!important;height:48px!important;margin:0 0 13px!important;border-radius:10px!important;
   box-shadow:0 4px 10px rgba(15,23,42,.08);display:flex!important;align-items:center;justify-content:center;
 }
 #toolsGrid>button>div>div:last-child{width:100%!important}
 #toolsGrid>button h3{
-  margin:0!important;padding-right:30px;color:#17345f!important;font-size:17px!important;line-height:1.3!important;
+  display:block!important;margin:0!important;padding-right:30px;color:#17345f!important;font-size:17px!important;line-height:1.3!important;
 }
 #toolsGrid>button p{margin-top:7px!important;color:#64748b!important;font-size:13px!important;line-height:1.5!important}
 #toolsGrid>button:nth-child(4n+1){background:linear-gradient(145deg,#fffafa,#fff)!important;border-color:#f0dede!important}
@@ -523,7 +524,7 @@ Design Work - 500)`,className:"w-full rounded-xl border border-slate-200 p-3 tex
   function reorderCards(){
     var grid=qs("#toolsGrid"); if(!grid||grid.dataset.referenceOrder==="1") return;
     var buttons=qsa(":scope > button",grid); if(buttons.length<2) return;
-    var wanted=["PDF to PowerPoint","PDF to Excel","Word to PDF","PowerPoint to PDF","Excel to PDF","Edit PDF","PDF to JPG","JPG/PNG to PDF","Sign PDF","Watermark","Rotate PDF","HTML to PDF"];
+    var wanted=["PDF to PowerPoint","PDF to Excel","Word to PDF","PowerPoint to PDF","Excel to PDF","Edit PDF","PDF to JPG","JPG/PNG to PDF","Sign PDF","Watermark","Rotate PDF","HTML to PDF","PDF to Word"];
     var norm=function(v){return (v||"").replace(/JPG\/PNG to PDF/,"JPG to PDF").trim().toLowerCase()};
     var used=new Set(), ordered=[];
     wanted.forEach(function(w){
@@ -535,19 +536,7 @@ Design Work - 500)`,className:"w-full rounded-xl border border-slate-200 p-3 tex
     ordered.forEach(function(b){grid.appendChild(b)});
     grid.dataset.referenceOrder="1";
   }
-  function featured(){
-    var hero=qs("#hero"), grid=qs("#toolsGrid");
-    if(!hero||!grid||qs("#smartFeatured")) return;
-    var wrap=document.createElement("section"); wrap.id="smartFeatured";
-    wrap.innerHTML='<div><div class="sf-title"><div class="sf-icon">W</div><div><h2>PDF to Word</h2><div class="sf-desc">Convert your PDF files to editable Word documents in seconds.</div></div></div><div class="sf-points"><span>Secure &amp; Private</span><span>Fast Conversion</span><span>No Installation</span></div></div><div class="sf-box"><div class="sf-cloud">☁</div><div class="sf-drop">Choose PDF file or drag and drop it here</div><button type="button" class="sf-btn">▱ &nbsp; Process &amp; Download&nbsp; →</button></div>';
-    var target=qsa("button",grid).find(function(b){var h=qs("h3",b);return h&&h.textContent.trim()==="PDF to Word"});
-    wrap.querySelector(".sf-btn").addEventListener("click",function(){if(target) target.click()});
-    wrap.querySelector(".sf-box").addEventListener("click",function(e){if(e.target.tagName!=="BUTTON"&&target) target.click()});
-    wrap.style.gridColumn="1 / -1";
-    var cards=qsa(":scope > button",grid);
-    var anchor=cards[11]||cards[cards.length-1];
-    if(anchor) anchor.insertAdjacentElement("afterend",wrap); else grid.appendChild(wrap);
-  }
+  function featured(){ /* PDF to Word stays in the normal tool-card grid. */ }
   function styleCards(){
     var grid=qs("#toolsGrid"); if(!grid) return;
     var cards=qsa(":scope > button",grid);
