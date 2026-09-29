@@ -1,0 +1,5 @@
+name = "smart-pdf-studio"
+compatibility_date = "2026-09-29"
+
+[assets]
+directory = "."
