@@ -569,44 +569,5 @@ Design Work - 500)`,className:"w-full rounded-xl border border-slate-200 p-3 tex
 })();
 
 </script>
-
-<!-- FINAL REFERENCE HOME FIX 2026-09-29 -->
-<style>
-/* Final reference-home overrides: keep PDF to Word as a normal grid card. */
-#smartFeatured,.smartFeatured,.pdf-to-word-featured,.pdf2word-featured{display:none!important}
-#toolsGrid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:20px!important}
-#toolsGrid>button{display:block!important;min-height:168px!important;padding:19px 26px!important;border-radius:19px!important}
-#toolsGrid>button>div:first-child{width:48px!important;height:48px!important}
-.smart-hero-art{right:8px!important;top:0!important;width:620px!important;height:170px!important}
-.smart-hero-art:before{right:8px!important;top:7px!important;width:400px!important;height:150px!important}
-.smart-pdf-card{right:110px!important;top:30px!important;width:82px!important;height:110px!important}
-.smart-float.w{right:255px!important;top:17px!important}
-.smart-float.x{right:20px!important;top:17px!important}
-.smart-float.i{right:275px!important;top:93px!important}
-.smart-float.j{right:0!important;top:87px!important}
-.smart-hand{right:365px!important;top:47px!important;width:165px!important}
-@media(max-width:1050px){#toolsGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.smart-hero-art{right:-20px!important;opacity:.72}}
-@media(max-width:760px){#toolsGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.smart-hero-art{right:-170px!important;opacity:.55}}
-@media(max-width:480px){#toolsGrid{grid-template-columns:1fr!important}}
-</style>
-<script>
-(function(){
-  function fixReferenceHome(){
-    var grid=document.getElementById('toolsGrid');
-    document.querySelectorAll('#smartFeatured,.smartFeatured,.pdf-to-word-featured,.pdf2word-featured').forEach(function(el){el.remove()});
-    if(!grid)return;
-    var cards=[].slice.call(document.querySelectorAll('button')).filter(function(b){var h=b.querySelector('h3');return h&&h.textContent.trim().toLowerCase()==='pdf to word'});
-    cards.forEach(function(card){if(card.parentElement!==grid)grid.appendChild(card)});
-    var buttons=[].slice.call(grid.querySelectorAll(':scope > button'));
-    var order=['PDF to PowerPoint','PDF to Excel','Word to PDF','PowerPoint to PDF','Excel to PDF','Edit PDF','PDF to JPG','JPG/PNG to PDF','Sign PDF','Watermark','Rotate PDF','HTML to PDF','PDF to Word'];
-    var used=new Set(),out=[];
-    order.forEach(function(name){var c=buttons.find(function(b){var h=b.querySelector('h3');return h&&!used.has(b)&&h.textContent.trim().toLowerCase()===name.toLowerCase()});if(c){out.push(c);used.add(c)}});
-    buttons.forEach(function(c){if(!used.has(c))out.push(c)}); out.forEach(function(c){grid.appendChild(c)});
-  }
-  fixReferenceHome();
-  document.addEventListener('DOMContentLoaded',fixReferenceHome);
-  setTimeout(fixReferenceHome,300);setTimeout(fixReferenceHome,1000);setTimeout(fixReferenceHome,2500);
-})();
-</script>
 </body>
 </html>
