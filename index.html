@@ -357,7 +357,10 @@ Design Work - 500)`,className:"w-full rounded-xl border border-slate-200 p-3 tex
     var target=qsa("button",grid).find(function(b){var h=qs("h3",b);return h&&h.textContent.trim()==="PDF to Word"});
     wrap.querySelector(".sf-btn").addEventListener("click",function(){if(target) target.click()});
     wrap.querySelector(".sf-box").addEventListener("click",function(e){if(e.target.tagName!=="BUTTON"&&target) target.click()});
-    grid.parentNode.insertBefore(wrap,grid.nextSibling);
+    wrap.style.gridColumn="1 / -1";
+    var cards=qsa(":scope > button",grid);
+    var anchor=cards[11]||cards[cards.length-1];
+    if(anchor) anchor.insertAdjacentElement("afterend",wrap); else grid.appendChild(wrap);
   }
   function styleCards(){
     var grid=qs("#toolsGrid"); if(!grid) return;
