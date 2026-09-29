@@ -1,0 +1,261 @@
+/* Smart PDF Studio — reference homepage visual layer.
+   This file intentionally targets ONLY the homepage shell/cards.
+   Tool-detail processing/input/output/download UI is not modified here. */
+
+:root{
+  --ref-navy:#17345f;
+  --ref-blue:#2f67d8;
+  --ref-muted:#64748b;
+}
+
+body{background:#f8fafc !important;color:#17345f !important;}
+
+header.sticky{
+  height:66px !important;
+  background:#fff !important;
+  border-bottom:1px solid #edf1f6 !important;
+  box-shadow:0 1px 8px rgba(15,23,42,.025) !important;
+}
+header.sticky > div{
+  max-width:1440px !important;
+  height:66px !important;
+  padding-left:46px !important;
+  padding-right:48px !important;
+  position:relative !important;
+}
+header.sticky > div > div:first-child{
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  min-width:270px !important;
+}
+header.sticky > div > div:first-child > div:first-child{
+  width:38px !important;height:38px !important;border-radius:10px !important;
+  background:linear-gradient(135deg,#9a8cff 0%,#2563eb 60%,#168ee8 100%) !important;
+  box-shadow:0 5px 12px rgba(37,99,235,.16) !important;
+}
+header.sticky > div > div:first-child::after{
+  content:"Home     About     Contact     Privacy     Terms     Cookies     Disclaimer";
+  position:absolute;
+  left:318px;
+  top:13px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  white-space:pre;
+  font-size:14px;
+  font-weight:500;
+  color:#253b5c;
+  letter-spacing:.1px;
+  pointer-events:none;
+}
+header.sticky > div > div:first-child > span{color:#172f55 !important;font-size:17px !important;}
+header.sticky > div > div:nth-child(2){
+  position:relative !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  padding-right:56px !important;
+}
+#langSelect{
+  height:40px !important;
+  padding:0 34px 0 14px !important;
+  border-radius:999px !important;
+  border:1px solid #e7ebf2 !important;
+  background:#fff !important;
+  color:#243752 !important;
+  box-shadow:0 2px 8px rgba(15,23,42,.025) !important;
+}
+header.sticky > div > div:nth-child(2)::after{
+  content:"⌕";
+  position:absolute;
+  right:0;
+  top:0;
+  width:40px;height:40px;
+  border:1px solid #e7ebf2;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#17345f;
+  font-size:22px;
+  line-height:1;
+  background:#fff;
+}
+
+#hero{
+  display:block !important;
+  padding-top:7px !important;
+  background:#f8fafc !important;
+}
+#hero > div:first-child{
+  position:relative !important;
+  width:calc(100% - 84px) !important;
+  max-width:1440px !important;
+  min-height:174px !important;
+  margin:0 auto 20px !important;
+  padding:31px 420px 28px 24px !important;
+  border:1px solid #e1e9f3 !important;
+  border-radius:19px !important;
+  overflow:hidden !important;
+  text-align:left !important;
+  background:
+    radial-gradient(circle at 84% 50%,rgba(217,232,255,.95) 0 13%,transparent 29%),
+    radial-gradient(circle at 96% 18%,rgba(224,216,255,.72) 0 7%,transparent 17%),
+    radial-gradient(circle at 99% 86%,rgba(254,240,185,.60) 0 5%,transparent 13%),
+    linear-gradient(105deg,#f8fbff 0%,#eef7ff 58%,#fbf8ff 100%) !important;
+  box-shadow:0 5px 18px rgba(15,23,42,.04) !important;
+}
+#hero > div:first-child::before{
+  content:"⚡  Fast • Free • Online";
+  position:absolute;
+  left:23px;
+  top:22px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:#dceeff;
+  color:#2a68ad;
+  font-size:12px;
+  line-height:1;
+  font-weight:700;
+}
+#hero > div:first-child::after{
+  content:"W     X     ▧       P\A          Simple Tools\A             Big Support\A                         PDF";
+  white-space:pre;
+  position:absolute;
+  right:35px;
+  top:20px;
+  width:390px;
+  height:140px;
+  color:#17345f;
+  font-weight:800;
+  font-size:19px;
+  line-height:1.38;
+  text-align:center;
+  transform:rotate(-1deg);
+  opacity:.96;
+  text-shadow:0 1px 0 rgba(255,255,255,.8);
+}
+#hero > div:first-child h1{
+  position:relative !important;
+  z-index:2 !important;
+  margin-top:39px !important;
+  font-size:38px !important;
+  line-height:1.08 !important;
+  letter-spacing:-1.1px !important;
+  color:#17345f !important;
+}
+#hero > div:first-child p{
+  position:relative !important;
+  z-index:2 !important;
+  margin-top:10px !important;
+  font-size:16px !important;
+  line-height:1.45 !important;
+  color:#30496e !important;
+}
+#hero > div:first-child h1::first-letter{color:#17345f;}
+
+#toolsGrid{
+  width:calc(100% - 84px) !important;
+  max-width:1440px !important;
+  margin:0 auto !important;
+  padding:0 0 46px !important;
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:20px !important;
+}
+#toolsGrid > button{
+  position:relative !important;
+  min-height:168px !important;
+  padding:20px 25px !important;
+  border:1px solid #e4e9ef !important;
+  border-radius:18px !important;
+  box-shadow:0 4px 13px rgba(15,23,42,.045) !important;
+  overflow:hidden !important;
+  background:#fff !important;
+  transition:transform .16s ease,box-shadow .16s ease !important;
+}
+#toolsGrid > button:nth-child(4n+1){background:linear-gradient(145deg,#fff9f9,#fff) !important;border-color:#f1dfdf !important;}
+#toolsGrid > button:nth-child(4n+2){background:linear-gradient(145deg,#f8fffc,#fff) !important;border-color:#dceee8 !important;}
+#toolsGrid > button:nth-child(4n+3){background:linear-gradient(145deg,#f8fbff,#fff) !important;border-color:#d9e5f3 !important;}
+#toolsGrid > button:nth-child(4n){background:linear-gradient(145deg,#fffdf9,#fff) !important;border-color:#eee5d7 !important;}
+#toolsGrid > button:hover{transform:translateY(-2px) !important;box-shadow:0 12px 25px rgba(15,23,42,.075) !important;}
+#toolsGrid > button::after{
+  content:"›";
+  position:absolute;
+  right:18px;top:18px;
+  width:29px;height:29px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  background:rgba(255,255,255,.72);
+  color:#2d68a7;
+  font-size:24px;
+  font-weight:400;
+}
+#toolsGrid > button > div{
+  display:block !important;
+}
+#toolsGrid > button > div > div:first-child{
+  width:48px !important;height:48px !important;
+  margin:0 0 12px !important;
+  border-radius:12px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-shadow:0 5px 11px rgba(15,23,42,.075) !important;
+}
+#toolsGrid > button > div > div:last-child{width:100% !important;}
+#toolsGrid > button h3{
+  margin:0 !important;
+  padding-right:28px !important;
+  font-size:17px !important;
+  line-height:1.25 !important;
+  color:#17345f !important;
+}
+#toolsGrid > button p{
+  margin-top:7px !important;
+  max-width:310px !important;
+  font-size:13px !important;
+  line-height:1.48 !important;
+  color:#64748b !important;
+}
+
+[data-i18n="process"],[data-i18n="processing"]{
+  background:#173b7a !important;
+  background-color:#173b7a !important;
+  border-color:#173b7a !important;
+  color:#fff !important;
+}
+[data-i18n="process"]:hover,[data-i18n="processing"]:hover{
+  background:#102f63 !important;background-color:#102f63 !important;
+}
+
+/* Do not alter the tool-detail panel layout. Only the processing button color above is overridden. */
+
+@media(max-width:1100px){
+  header.sticky > div > div:first-child::after{left:290px;font-size:12px;}
+  #hero > div:first-child{width:calc(100% - 40px) !important;padding-right:300px !important;}
+  #hero > div:first-child::after{right:-45px;transform:scale(.85);}
+  #toolsGrid{width:calc(100% - 40px) !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+}
+@media(max-width:760px){
+  header.sticky > div{padding:0 18px !important;}
+  header.sticky > div > div:first-child::after{display:none;}
+  header.sticky > div > div:nth-child(2){padding-right:0 !important;}
+  header.sticky > div > div:nth-child(2)::after{display:none;}
+  #hero > div:first-child{
+    width:calc(100% - 28px) !important;
+    min-height:185px !important;
+    padding:30px 24px 24px !important;
+  }
+  #hero > div:first-child h1{font-size:29px !important;max-width:75% !important;}
+  #hero > div:first-child p{font-size:14px !important;max-width:70% !important;}
+  #hero > div:first-child::after{right:-125px;top:35px;transform:scale(.7);}
+  #toolsGrid{width:calc(100% - 28px) !important;grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:14px !important;}
+  #toolsGrid > button{min-height:158px !important;padding:18px !important;}
+}
+@media(max-width:480px){
+  #toolsGrid{grid-template-columns:1fr !important;}
+  #hero > div:first-child h1{max-width:100% !important;}
+  #hero > div:first-child p{max-width:100% !important;}
+}
