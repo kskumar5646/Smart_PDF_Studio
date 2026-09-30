@@ -1,0 +1,4 @@
+/* Smart PDF Studio — homepage-only behavior */
+(function(){function q(s,r){return(r||document).querySelector(s)}function qa(s,r){return Array.from((r||document).querySelectorAll(s))}
+function init(){const h=q("header.sticky"),w=h&&h.firstElementChild;if(w&&!q("#smartTopNav",w)){const n=document.createElement("nav");n.id="smartTopNav";[["Home","home"],["About","about"],["Contact","contact"],["Privacy","privacy"],["Terms","terms"],["Cookies","cookie"],["Disclaimer","disclaimer"]].forEach(([a,k])=>{const b=document.createElement("button");b.type="button";b.textContent=a;b.onclick=()=>k==="home"?scrollTo({top:0,behavior:"smooth"}):(qa('footer button[data-i18n="'+k+'"]').pop()||{}).click?.();n.appendChild(b)});w.insertBefore(n,w.lastElementChild)}}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();setTimeout(init,700)})();
