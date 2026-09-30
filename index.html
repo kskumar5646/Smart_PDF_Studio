@@ -344,6 +344,244 @@ header.sticky #headerTitle{font-size:18px!important;font-weight:800!important;co
 }
 </style>
 <script src="./tool-icons-2d.js"></script>
+
+<style id="smart-pdf-modern-design-v1">
+/* Smart PDF Studio — Modern UI layer
+   Visual-only: no PDF processing, conversion, upload or tool-handler logic is changed. */
+:root{
+  --sp-bg:#f5f8fc;
+  --sp-surface:#ffffff;
+  --sp-ink:#142b4a;
+  --sp-muted:#64748b;
+  --sp-blue:#2563d4;
+  --sp-blue-dark:#173b7a;
+  --sp-line:#e2eaf3;
+  --sp-soft:#eef5ff;
+}
+html{scroll-behavior:smooth}
+body{
+  background:
+    radial-gradient(circle at 10% 0%,rgba(37,99,212,.055),transparent 28rem),
+    linear-gradient(180deg,#f8fbff 0%,var(--sp-bg) 42%,#f6f8fb 100%)!important;
+  color:var(--sp-ink)!important;
+}
+header.sticky{
+  height:70px!important;
+  background:rgba(255,255,255,.94)!important;
+  backdrop-filter:blur(16px)!important;
+  -webkit-backdrop-filter:blur(16px)!important;
+  border-bottom:1px solid rgba(210,222,237,.8)!important;
+  box-shadow:0 4px 18px rgba(15,35,65,.045)!important;
+  z-index:50!important;
+}
+header.sticky>div{
+  height:70px!important;
+  max-width:1280px!important;
+  padding:0 22px!important;
+}
+header.sticky>div>div:first-child{gap:11px!important}
+header.sticky>div>div:first-child>div:first-child{
+  width:40px!important;height:40px!important;border-radius:12px!important;
+  background:linear-gradient(145deg,#3d7df0,#1858c5)!important;
+  box-shadow:0 7px 16px rgba(37,99,212,.20)!important;
+}
+header.sticky #headerTitle{
+  font-size:18px!important;font-weight:800!important;
+  letter-spacing:-.25px;color:#142b4a!important;
+}
+#smartTopNav{
+  margin-left:28px!important;gap:3px!important;
+}
+#smartTopNav button{
+  padding:9px 12px!important;border-radius:11px!important;
+  color:#52647b!important;font-size:13px!important;font-weight:600!important;
+  transition:all .18s ease!important;
+}
+#smartTopNav button:hover{background:#f1f5fa!important;color:#1c4f9e!important}
+#smartTopNav button[data-active="1"]{
+  background:#eaf2ff!important;color:#1f60c9!important;
+}
+#smartHeaderTools{gap:8px!important}
+#smartSearchBtn{
+  width:40px!important;height:40px!important;border-radius:12px!important;
+  border:1px solid var(--sp-line)!important;background:#fff!important;
+  box-shadow:0 2px 7px rgba(15,35,65,.035)!important;
+  color:#31577f!important;
+}
+#hero{padding:18px 0 8px!important}
+#hero>div:first-child{
+  width:min(1280px,calc(100% - 40px))!important;
+  max-width:1280px!important;height:205px!important;min-height:205px!important;
+  margin:0 auto 22px!important;padding:31px 36px!important;
+  border:1px solid #dbe7f5!important;border-radius:24px!important;
+  background:
+    radial-gradient(circle at 88% 35%,rgba(93,145,235,.18),transparent 20rem),
+    linear-gradient(115deg,#f8fbff 0%,#edf5ff 57%,#f5f2ff 100%)!important;
+  box-shadow:0 12px 30px rgba(23,59,122,.055)!important;
+  text-align:left!important;
+}
+#hero>div:first-child:before{
+  left:36px!important;top:25px!important;
+  padding:6px 11px!important;border:1px solid #d4e6ff!important;
+  background:#e9f3ff!important;color:#2865ad!important;
+  font-size:11px!important;letter-spacing:.2px!important;
+}
+#hero>div:first-child h1{
+  margin-top:39px!important;
+  max-width:610px!important;
+  font-size:38px!important;line-height:1.08!important;
+  letter-spacing:-1.25px!important;color:#142f55!important;
+}
+#hero>div:first-child p{
+  max-width:610px!important;margin-top:9px!important;
+  font-size:15px!important;line-height:1.55!important;color:#526b89!important;
+}
+#hero>div:first-child h1 .sp-pdf-word{color:#2c6ddd!important}
+.smart-hero-art{opacity:.82!important;transform:scale(.94);transform-origin:right center}
+.smart-hand{font-size:16px!important;opacity:.72}
+.smart-pdf-card{box-shadow:0 16px 30px rgba(239,68,68,.17)!important}
+#toolsGrid{
+  width:min(1280px,calc(100% - 40px))!important;
+  max-width:1280px!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:16px!important;
+  padding:2px 0 22px!important;
+}
+#toolsGrid>.col-span-full{
+  display:block!important;
+  grid-column:1 / -1!important;
+  padding:13px 2px 1px!important;
+}
+#toolsGrid>.col-span-full h2{
+  font-size:15px!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+  color:#263e5d!important;
+  letter-spacing:.1px!important;
+  position:relative!important;
+  padding-left:13px!important;
+}
+#toolsGrid>.col-span-full h2:before{
+  content:""!important;
+  position:absolute!important;left:0;top:2px;bottom:2px;width:3px;
+  border-radius:99px;background:#3476db;
+}
+#toolsGrid>button{
+  min-height:158px!important;
+  padding:18px 19px!important;
+  border-radius:17px!important;
+  border:1px solid #e1e8f1!important;
+  background:#fff!important;
+  box-shadow:0 4px 13px rgba(15,35,65,.035)!important;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease!important;
+}
+#toolsGrid>button:hover{
+  transform:translateY(-3px)!important;
+  border-color:#c9dbf2!important;
+  box-shadow:0 14px 30px rgba(23,59,122,.085)!important;
+}
+#toolsGrid>button:after{
+  right:15px!important;top:15px!important;width:28px!important;height:28px!important;
+  background:#f2f6fb!important;color:#3971c7!important;font-size:22px!important;
+}
+#toolsGrid>button>div>div:first-child{
+  width:46px!important;height:46px!important;margin:0 0 12px!important;
+  border-radius:12px!important;box-shadow:none!important;
+}
+#toolsGrid>button h3{
+  font-size:15.5px!important;line-height:1.3!important;
+  font-weight:750!important;color:#1b3659!important;
+}
+#toolsGrid>button p{
+  margin-top:6px!important;font-size:12.5px!important;
+  line-height:1.48!important;color:#73849a!important;
+}
+#smartFeatured{
+  width:min(1280px,calc(100% - 40px))!important;
+  max-width:1280px!important;height:178px!important;
+  margin:2px auto 36px!important;padding:22px 25px!important;
+  border:1px solid #dce7f3!important;border-radius:21px!important;
+  background:linear-gradient(105deg,#ffffff,#f7fbff)!important;
+  box-shadow:0 10px 28px rgba(23,59,122,.055)!important;
+}
+#smartFeatured .sf-icon{
+  width:46px!important;height:46px!important;border-radius:12px!important;
+  background:#eaf2ff!important;color:#2464c8!important;
+}
+#smartFeatured h2{font-size:21px!important;color:#183555!important}
+#smartFeatured .sf-desc{color:#71839a!important}
+#smartFeatured .sf-points{gap:20px!important;margin-top:17px!important}
+#smartFeatured .sf-box{
+  height:132px!important;border-radius:15px!important;
+  border:1px dashed #c9d8ea!important;background:#fbfdff!important;
+}
+#smartFeatured .sf-btn{
+  height:40px!important;border-radius:11px!important;
+  background:#173b7a!important;padding:0 55px!important;
+  box-shadow:0 7px 16px rgba(23,59,122,.16)!important;
+}
+#smartFeatured .sf-btn:hover{background:#123267!important}
+footer{
+  margin-top:12px!important;
+  border-top:1px solid #dce5ef!important;
+}
+footer>div:first-child{
+  max-width:1280px!important;
+}
+footer button,footer a{transition:color .16s ease!important}
+div.fixed.inset-0.bg-black\/60>div{
+  border-radius:20px!important;
+  box-shadow:0 24px 70px rgba(15,35,65,.22)!important;
+}
+[data-i18n="process"],[data-i18n="processing"]{
+  border-radius:11px!important;
+  box-shadow:0 6px 14px rgba(23,59,122,.14)!important;
+}
+@media(max-width:1050px){
+  header.sticky>div{padding:0 16px!important}
+  #smartTopNav{margin-left:10px!important}
+  #smartTopNav button{padding:8px 8px!important;font-size:12px!important}
+  #toolsGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:760px){
+  header.sticky{height:64px!important}
+  header.sticky>div{height:64px!important;padding:0 13px!important}
+  header.sticky #headerTitle{font-size:16px!important}
+  #smartTopNav{display:none!important}
+  #hero{padding-top:12px!important}
+  #hero>div:first-child{
+    width:calc(100% - 24px)!important;min-height:218px!important;height:auto!important;
+    padding:29px 21px!important;border-radius:20px!important;
+  }
+  #hero>div:first-child:before{left:21px!important;top:21px!important}
+  #hero>div:first-child h1{
+    margin-top:39px!important;max-width:72%!important;
+    font-size:29px!important;letter-spacing:-.8px!important;
+  }
+  #hero>div:first-child p{max-width:72%!important;font-size:13.5px!important}
+  .smart-hero-art{right:-150px!important;top:28px!important;transform:scale(.68)!important;opacity:.42!important}
+  #toolsGrid{
+    width:calc(100% - 24px)!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;
+  }
+  #toolsGrid>button{min-height:148px!important;padding:15px!important;border-radius:15px!important}
+  #toolsGrid>button h3{font-size:15px!important}
+  #toolsGrid>button p{font-size:12px!important}
+  #smartFeatured{
+    width:calc(100% - 24px)!important;height:auto!important;
+    grid-template-columns:1fr!important;gap:15px!important;
+    padding:16px!important;margin-bottom:25px!important;
+  }
+  #smartFeatured .sf-box{height:125px!important}
+}
+@media(max-width:520px){
+  #toolsGrid{grid-template-columns:1fr!important}
+  #hero>div:first-child h1,#hero>div:first-child p{max-width:100%!important}
+  .smart-hero-art{display:none!important}
+  #toolsGrid>button{min-height:128px!important}
+}
+</style>
+
 </head>
 <body>
 <div id="root"></div>
