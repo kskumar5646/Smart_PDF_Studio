@@ -1,5 +1,4 @@
 name = "smart-pdf-studio"
-compatibility_date = "2026-09-29"
-
+compatibility_date = "2026-09-30"
 [assets]
 directory = "."

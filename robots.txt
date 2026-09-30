@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
-
 Sitemap: https://smart-pdf-studio.shantanukumar5646.workers.dev/sitemap.xml
