@@ -1,1 +1,97 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Smart PDF Studio — browser-first PDF, document and image tools."><title>Smart PDF Studio</title><link rel="icon" href="favicon.svg"><link rel="stylesheet" href="styles.css"></head><body><header><div class="wrap nav"><a class="brand" href="index.html"><b class="logo">SP</b><span><strong>Smart PDF</strong><small>STUDIO</small></span></a><nav><a href="#popular">Popular</a><a href="#tools">All Tools</a><a href="#about">About</a></nav><select><option>English</option><option>हिन्दी</option><option>Español</option><option>Français</option><option>Deutsch</option><option>中文</option><option>日本語</option><option>العربية</option><option>Português</option><option>Русский</option></select></div></header><main><section class="hero"><div class="wrap heroGrid"><div><label>PRIVATE · FAST · BROWSER-BASED</label><h1>PDF work,<br><em>beautifully simple.</em></h1><p>Compress, convert, edit, organize and create documents directly in your browser.</p><div class="actions"><a class="btn primary" href="#tools">Explore all tools</a><a class="btn secondary" href="#popular">Popular tools</a></div><div class="trust">✓ No account required &nbsp; ✓ Browser-first &nbsp; ✓ Mobile ready</div></div><div class="visual"><div class="sheet back"></div><div class="sheet mid"></div><div class="sheet front"><b>PDF</b><hr><hr class="short"><div class="box"></div><hr></div><div class="bubble one">60 tools</div><div class="bubble two">Local processing</div></div></div></section><section id="popular" class="section"><div class="wrap"><div class="head"><div><label>START HERE</label><h2>Popular Tools</h2></div></div><div id="popularGrid" class="popularGrid"></div></div></section><section id="tools" class="section gray"><div class="wrap"><div class="head"><div><label>FULL TOOLKIT</label><h2>All Tools</h2></div><p>PDF, conversion, editing, organization, security, creation and image utilities.</p></div><div class="controls"><input id="search" placeholder="Search tools…"><div id="filters"></div></div><div id="grid" class="toolGrid"></div></div></section><section id="about" class="section"><div class="wrap about"><div><label>ABOUT</label><h2>Built around clarity.</h2></div><p>Smart PDF Studio is a standalone static browser-first website. Files are processed locally for supported operations; there is no application backend.</p></div></section></main><footer><div class="wrap foot"><div><a class="brand" href="index.html"><b class="logo">SP</b><span><strong>Smart PDF</strong><small>STUDIO</small></span></a><p>Browser-first PDF, document and image utilities.</p></div><div><b>Legal</b><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a><a href="disclaimer.html">Disclaimer</a></div><div><b>Help</b><a href="about.html">About</a><a href="contact.html">Contact / FAQ</a></div></div><div class="copy">© 2026 Smart PDF Studio</div></footer><div id="modal" class="modal"><div class="modalbox"><button id="close">×</button><div id="workspace"></div></div></div><script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#061633">
+<meta name="description" content="Smart PDF Studio — modern browser-first PDF, document and image tools. Process supported files locally in your browser.">
+<link rel="canonical" href="https://kskumar5646.github.io/Smart_PDF_Studio/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="site.webmanifest">
+<title>Smart PDF Studio — PDF & Image Tools</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="Smart PDF Studio home">
+    <span class="brandMark">SP</span><span>Smart <b>PDF</b> Studio</span>
+  </a>
+  <nav aria-label="Primary">
+    <a href="#popular">Popular</a><a href="#tools">All Tools</a><a href="#about">About</a>
+  </nav>
+  <div class="headActions">
+    <select aria-label="Language">
+      <option>English</option><option>हिन्दी</option><option>Español</option><option>Français</option>
+      <option>Deutsch</option><option>中文</option><option>日本語</option><option>العربية</option>
+      <option>Português</option><option>Русский</option>
+    </select>
+    <button aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="heroCopy">
+    <span class="pill">PRIVATE · FAST · BROWSER-BASED</span>
+    <h1>PDF work,<br><em>beautifully simple.</em></h1>
+    <p>Compress, convert, edit, organize and create documents directly in your browser.</p>
+    <div class="heroActions">
+      <a class="primary" href="#tools">Explore all tools</a>
+      <a class="ghost" href="#popular">Popular tools</a>
+    </div>
+    <div class="heroTrust"><span>✓ No account required</span><span>✓ Browser-first</span><span>✓ Mobile ready</span></div>
+  </div>
+  <div class="heroArt" aria-hidden="true">
+    <div class="artGlow"></div><div class="device"><div class="deviceTop"></div><div class="doc">
+      <div class="docHead"><span>SMART PDF</span><span>STUDIO</span></div>
+      <div class="docTitle">Your files,<br><strong>your browser.</strong></div>
+      <i></i><i></i><i class="short"></i>
+      <div class="docCards"><b>PDF</b><b>IMG</b></div><div class="docFooter"></div>
+    </div></div>
+    <div class="floating f1">60<small>TOOLS</small></div><div class="floating f2">↗</div>
+    <div class="secure">✓ Local-first processing</div>
+  </div>
+</section>
+
+<section id="popular" class="toolsSection">
+  <div class="sectionIntro"><div><label class="eyebrow">START HERE</label><h2>Popular Tools</h2></div><p>Quick access to frequently used utilities.</p></div>
+  <div id="popularGrid" class="grid"></div>
+</section>
+
+<section id="tools" class="toolsSection">
+  <div class="sectionIntro"><div><label class="eyebrow">FULL TOOLKIT</label><h2>All Tools</h2></div><div class="searchWrap"><span>⌕</span><input id="search" placeholder="Search tools…" aria-label="Search tools"></div></div>
+  <div id="filters" class="categories"></div>
+  <div id="grid" class="grid"></div>
+</section>
+
+<section id="about" class="about">
+  <label class="eyebrow">ABOUT</label><h2>Built around clarity.</h2>
+  <p>Smart PDF Studio is a standalone static, browser-first website. Supported operations run locally in the browser; there is no application backend for file processing.</p>
+  <div class="featureGrid">
+    <article><span class="featureIcon">◈</span><b>Browser-first</b><small>Selected files stay in the browser for supported local operations.</small></article>
+    <article><span class="featureIcon">✦</span><b>60 tools</b><small>PDF, conversion, editing, organization, security, creation and image utilities.</small></article>
+    <article><span class="featureIcon">✓</span><b>Responsive</b><small>Designed for phones, tablets and desktop screens.</small></article>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="footerBrand"><span class="brandMark">SP</span><span>Smart PDF Studio</span></div>
+  <div class="footerLinks"><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="cookies.html">Cookies</a><a href="disclaimer.html">Disclaimer</a></div>
+  <small>© 2026 Smart PDF Studio · Browser-first document and image utilities.</small>
+</footer>
+
+<div id="modal" class="workspace" aria-hidden="true">
+  <div class="workspaceShade"></div>
+  <div class="workspacePanel" role="dialog" aria-modal="true" aria-label="Tool workspace">
+    <div class="workspaceHeader"><div class="workspaceIcon">✦</div><div><h2 id="workspaceTitle">Tool</h2><p id="workspaceDescription"></p></div><button id="close" class="close" aria-label="Close">×</button></div>
+    <div id="workspace" class="workspaceBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
