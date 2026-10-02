@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kskumar5646.github.io/Smart_PDF_Studio/sitemap.xml

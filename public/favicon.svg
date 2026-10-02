@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0c4a6e" />
+    </linearGradient>
+    <linearGradient id="frontPage" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0f9ff" />
+    </linearGradient>
+    <linearGradient id="swooshGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444" />
+      <stop offset="100%" stop-color="#b91c1c" />
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#031525" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Background Back Layer Document -->
+  <path d="M 38 16 L 86 16 L 102 32 L 102 108 A 8 8 0 0 1 94 116 L 38 116 A 8 8 0 0 1 30 108 L 30 24 A 8 8 0 0 1 38 16 Z" 
+        fill="#075985" opacity="0.6" transform="rotate(-6 66 66)" />
+
+  <!-- Main Front Document -->
+  <g filter="url(#dropShadow)">
+    <path d="M 28 20 L 78 20 L 98 40 L 98 106 A 8 8 0 0 1 90 114 L 28 114 A 8 8 0 0 1 20 106 L 20 28 A 8 8 0 0 1 28 20 Z" 
+          fill="url(#frontPage)" stroke="#bae6fd" stroke-width="1.5" />
+    
+    <!-- Folded corner -->
+    <path d="M 78 20 L 78 38 A 2 2 0 0 0 80 40 L 98 40 Z" fill="#e0f2fe" stroke="#bae6fd" stroke-width="1" />
+    
+    <!-- Cyan dynamic swoosh arc -->
+    <path d="M 22 75 C 40 60, 70 62, 96 85 C 80 72, 45 74, 22 88 Z" fill="url(#swooshGrad)" />
+    <path d="M 24 82 C 45 70, 75 74, 94 93 C 78 82, 48 82, 24 94 Z" fill="#38bdf8" opacity="0.7" />
+
+    <!-- Content decorative lines -->
+    <rect x="30" y="36" width="36" height="4" rx="2" fill="#0284c7" opacity="0.8" />
+    <rect x="30" y="46" width="44" height="3" rx="1.5" fill="#94a3b8" />
+    <rect x="30" y="54" width="38" height="3" rx="1.5" fill="#cbd5e1" />
+
+    <!-- PDF Red/Cyan Badge -->
+    <rect x="22" y="90" width="38" height="18" rx="4" fill="url(#badgeGrad)" filter="url(#dropShadow)" />
+    <text x="41" y="103" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="0.5">PDF</text>
+
+    <!-- Glossy reflection overlay -->
+    <path d="M 20 28 A 8 8 0 0 1 28 20 L 78 20 L 20 78 Z" fill="#ffffff" opacity="0.3" />
+  </g>
+</svg>

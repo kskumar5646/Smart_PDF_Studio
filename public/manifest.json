@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "Smart PDF Studio",
+  "short_name": "SmartPDF",
+  "description": "Fast. Secure. Private. Browser-based PDF and image tools.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#040d1a",
+  "theme_color": "#0284c7",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
