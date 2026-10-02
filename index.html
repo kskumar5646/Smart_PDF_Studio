@@ -14,7 +14,7 @@
 <body>
 <header class="topbar">
   <a class="brand" href="#home">
-    <span class="brandMark"><svg viewBox="0 0 72 72" aria-hidden="true"><defs><linearGradient id="logoBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#49e9ff"/><stop offset=".45" stop-color="#078cff"/><stop offset="1" stop-color="#0648c7"/></linearGradient><linearGradient id="logoCyan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8df7ff"/><stop offset="1" stop-color="#00b9f4"/></linearGradient><filter id="logoShadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#001a55" flood-opacity=".5"/></filter></defs><path d="M15 11h31l11 11v38H15z" fill="url(#logoBlue)" filter="url(#logoShadow)"/><path d="M46 11v14h14" fill="#9defff" opacity=".9"/><path d="M24 32h24M24 40h19M24 48h14" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".95"/><path d="M8 48c8 7 16 10 26 10 13 0 24-6 30-16" fill="none" stroke="url(#logoCyan)" stroke-width="8" stroke-linecap="round"/><path d="M9 48c6-5 10-11 11-18" fill="none" stroke="#49e9ff" stroke-width="5" stroke-linecap="round"/><rect x="20" y="45" width="32" height="18" rx="5" fill="#0b67d9" stroke="#9defff" stroke-width="2"/><text x="25" y="58" font-size="11" font-weight="900" font-family="Arial,sans-serif" fill="#fff">PDF</text></svg></span>
+    <span class="brandMark"><svg viewBox="0 0 92 72" aria-hidden="true" class="brandSvg"><defs><linearGradient id="lbh" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#73f2ff"/><stop offset=".34" stop-color="#159fff"/><stop offset="1" stop-color="#0349bd"/></linearGradient><linearGradient id="lsh" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c8fbff"/><stop offset=".45" stop-color="#19d8ff"/><stop offset="1" stop-color="#0074df"/></linearGradient><filter id="lshh" x="-30%" y="-30%" width="170%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#00143f" flood-opacity=".55"/></filter></defs><g filter="url(#lshh)"><path d="M20 9h31l12 12v39H20z" fill="url(#lbh)"/><path d="M51 9v15h15" fill="#d8fbff" opacity=".85"/><path d="M28 29h27M28 37h22M28 45h17" stroke="#fff" stroke-width="3.3" stroke-linecap="round" opacity=".95"/><path d="M12 51c7 8 18 12 31 12 15 0 28-7 36-20" fill="none" stroke="url(#lsh)" stroke-width="9" stroke-linecap="round"/><path d="M12 51c6-4 10-10 12-18" fill="none" stroke="#8cf7ff" stroke-width="5" stroke-linecap="round"/><rect x="25" y="43" width="35" height="20" rx="6" fill="#075dcc" stroke="#b4f8ff" stroke-width="2"/><text x="29" y="57" font-family="Arial,sans-serif" font-size="12" font-weight="900" fill="#fff">PDF</text></g></svg></span>
     <span class="brandText"><strong>Smart <i>PDF</i> Studio</strong><small>All PDF Tools in One Place</small></span>
   </a>
   <nav aria-label="Primary">
@@ -40,18 +40,49 @@
     <p>Edit, convert, compress, merge, split and more — <b>100% free</b>, no installation, no registration. Your files stay on your device.</p>
     <div class="heroSearch"><span>⌕</span><input id="heroSearch" placeholder="Search for tools (e.g. PDF to Word, Compress PDF, Merge PDF...)" aria-label="Search for tools"><button id="heroSearchBtn">Search</button></div>
     <div class="trustRow">
-      <div><b>▣</b><span><strong>100% Browser Based</strong><small>No installation required</small></span></div>
-      <div><b>♢</b><span><strong>Your Privacy Matters</strong><small>Files stay on your device</small></span></div>
-      <div><b>✎</b><span><strong>Fast &amp; Reliable</strong><small>Powered by modern web tech</small></span></div>
-      <div><b>✦</b><span><strong>Free Forever</strong><small>No signup, no limits</small></span></div>
+      <div><b class="trustIcon">▣</b><span><strong>100% Browser Based</strong><small>No installation required</small></span></div>
+      <div><b class="trustIcon">◇</b><span><strong>Your Privacy Matters</strong><small>Files stay on your device</small></span></div>
+      <div><b class="trustIcon">✎</b><span><strong>Fast &amp; Reliable</strong><small>Powered by modern web tech</small></span></div>
+      <div><b class="trustIcon">✦</b><span><strong>Free Forever</strong><small>No signup, no limits</small></span></div>
     </div>
   </div>
-  <div class="heroVisual" aria-label="PDF tools illustration">
+  <div class="heroVisual" aria-label="Smart PDF Studio PDF tools illustration">
     <div class="heroGlow"></div>
-    <div class="heroOrb"></div>
-    <div class="floatIcon word">W</div><div class="floatIcon excel">X</div><div class="floatIcon image">▧</div><div class="floatIcon share">⌁</div><div class="floatIcon shield">♢</div>
-    <div class="pdfDocument"><div class="docFold"></div><div class="docLines"></div><div class="pdfStamp">PDF</div><div class="docFooter"></div></div>
-    <div class="heroTag">100% Browser Processing</div>
+    <svg class="heroArt" viewBox="0 0 560 330" role="img" aria-label="PDF document with productivity tools">
+      <defs>
+        <radialGradient id="hg" cx=".52" cy=".48"><stop stop-color="#159cff" stop-opacity=".52"/><stop offset=".55" stop-color="#0879ee" stop-opacity=".18"/><stop offset="1" stop-color="#0879ee" stop-opacity="0"/></radialGradient>
+        <linearGradient id="doc" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#dcecff"/></linearGradient>
+        <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eef8ff"/><stop offset="1" stop-color="#c9ddf4"/></linearGradient>
+        <linearGradient id="blueI" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38dfff"/><stop offset="1" stop-color="#0067df"/></linearGradient>
+        <linearGradient id="greenI" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5be7a8"/><stop offset="1" stop-color="#07945d"/></linearGradient>
+        <linearGradient id="redI" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff6172"/><stop offset="1" stop-color="#d51837"/></linearGradient>
+        <linearGradient id="orangeI" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffd05a"/><stop offset="1" stop-color="#ef7700"/></linearGradient>
+        <filter id="ds" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#00163d" flood-opacity=".45"/></filter>
+      </defs>
+      <ellipse cx="342" cy="170" rx="208" ry="138" fill="url(#hg)"/>
+      <ellipse cx="342" cy="170" rx="177" ry="112" fill="none" stroke="#22a5ff" stroke-opacity=".28"/>
+      <ellipse cx="342" cy="170" rx="143" ry="92" fill="none" stroke="#22a5ff" stroke-opacity=".18"/>
+      <!-- central laptop / PDF document -->
+      <g filter="url(#ds)" transform="translate(212 52) rotate(4 110 115)">
+        <path d="M25 8h145l22 22v168H25z" fill="url(#doc)" stroke="#b8d7f5" stroke-width="6"/>
+        <path d="M170 8v25h25" fill="#c7dcf4"/>
+        <path d="M52 62h112M52 82h102M52 102h106M52 122h92" stroke="#b8cde6" stroke-width="7" stroke-linecap="round"/>
+        <rect x="53" y="132" width="90" height="42" rx="7" fill="#f02e46"/>
+        <text x="67" y="161" font-family="Arial,sans-serif" font-size="27" font-weight="900" fill="#fff">PDF</text>
+        <path d="M41 199h135l-18 24H59z" fill="#83b4e9"/>
+        <path d="M59 214h99l-11 11H70z" fill="#1b70c8"/>
+      </g>
+      <!-- floating tool icons, deliberately close to central object -->
+      <g filter="url(#ds)">
+        <g transform="translate(177 22) rotate(-9)"><rect width="58" height="58" rx="13" fill="url(#blueI)"/><text x="17" y="38" font-family="Arial" font-size="26" font-weight="900" fill="#fff">W</text></g>
+        <g transform="translate(402 30) rotate(7)"><rect width="58" height="58" rx="13" fill="url(#greenI)"/><text x="17" y="39" font-family="Arial" font-size="27" font-weight="900" fill="#fff">X</text></g>
+        <g transform="translate(132 105) rotate(-12)"><rect width="55" height="55" rx="13" fill="url(#blueI)"/><path d="M13 38l10-10 8 8 7-7 8 9" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="21" r="4" fill="#fff"/></g>
+        <g transform="translate(429 120) rotate(8)"><rect width="55" height="55" rx="13" fill="url(#orangeI)"/><path d="M18 19l18 18M36 19L18 37" stroke="#fff" stroke-width="4" stroke-linecap="round"/><circle cx="27" cy="28" r="13" fill="none" stroke="#fff" stroke-width="3"/></g>
+        <g transform="translate(386 211) rotate(-8)"><rect width="55" height="55" rx="13" fill="url(#blueI)"/><path d="M27 14l15 6v9c0 10-6 17-15 21-9-4-15-11-15-21v-9z" fill="none" stroke="#fff" stroke-width="3"/><path d="M21 29l5 5 9-10" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g>
+        <g transform="translate(125 208) rotate(-10)"><rect width="55" height="55" rx="13" fill="url(#redI)"/><path d="M15 39l12-22 14 22M20 32h15" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>
+      </g>
+      <g transform="translate(388 272)" filter="url(#ds)"><rect width="135" height="31" rx="15.5" fill="#fff"/><circle cx="19" cy="15.5" r="7" fill="#0d8aef"/><path d="M16 15l3 3 5-6" fill="none" stroke="#fff" stroke-width="2"/><text x="33" y="20" font-family="Arial,sans-serif" font-size="11" font-weight="800" fill="#1763a8">100% Browser Processing</text></g>
+    </svg>
   </div>
 </section>
 
@@ -100,7 +131,7 @@
 
 <footer>
   <div class="footerMain">
-    <div class="footerBrand"><span class="brandMark smallMark"><svg viewBox="0 0 72 72" aria-hidden="true"><defs><linearGradient id="logoBlue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#49e9ff"/><stop offset=".45" stop-color="#078cff"/><stop offset="1" stop-color="#0648c7"/></linearGradient><linearGradient id="logoCyan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8df7ff"/><stop offset="1" stop-color="#00b9f4"/></linearGradient><filter id="logoShadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#001a55" flood-opacity=".5"/></filter></defs><path d="M15 11h31l11 11v38H15z" fill="url(#logoBlue)" filter="url(#logoShadow)"/><path d="M46 11v14h14" fill="#9defff" opacity=".9"/><path d="M24 32h24M24 40h19M24 48h14" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".95"/><path d="M8 48c8 7 16 10 26 10 13 0 24-6 30-16" fill="none" stroke="url(#logoCyan)" stroke-width="8" stroke-linecap="round"/><path d="M9 48c6-5 10-11 11-18" fill="none" stroke="#49e9ff" stroke-width="5" stroke-linecap="round"/><rect x="20" y="45" width="32" height="18" rx="5" fill="#0b67d9" stroke="#9defff" stroke-width="2"/><text x="25" y="58" font-size="11" font-weight="900" font-family="Arial,sans-serif" fill="#fff">PDF</text></svg></span><div><strong>Smart PDF Studio</strong><small>All PDF Tools in One Place</small></div></div>
+    <div class="footerBrand"><span class="brandMark smallMark"><svg viewBox="0 0 92 72" aria-hidden="true" class="brandSvg"><defs><linearGradient id="lbf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#73f2ff"/><stop offset=".34" stop-color="#159fff"/><stop offset="1" stop-color="#0349bd"/></linearGradient><linearGradient id="lsf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c8fbff"/><stop offset=".45" stop-color="#19d8ff"/><stop offset="1" stop-color="#0074df"/></linearGradient><filter id="lshf" x="-30%" y="-30%" width="170%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#00143f" flood-opacity=".55"/></filter></defs><g filter="url(#lshf)"><path d="M20 9h31l12 12v39H20z" fill="url(#lbf)"/><path d="M51 9v15h15" fill="#d8fbff" opacity=".85"/><path d="M28 29h27M28 37h22M28 45h17" stroke="#fff" stroke-width="3.3" stroke-linecap="round" opacity=".95"/><path d="M12 51c7 8 18 12 31 12 15 0 28-7 36-20" fill="none" stroke="url(#lsf)" stroke-width="9" stroke-linecap="round"/><path d="M12 51c6-4 10-10 12-18" fill="none" stroke="#8cf7ff" stroke-width="5" stroke-linecap="round"/><rect x="25" y="43" width="35" height="20" rx="6" fill="#075dcc" stroke="#b4f8ff" stroke-width="2"/><text x="29" y="57" font-family="Arial,sans-serif" font-size="12" font-weight="900" fill="#fff">PDF</text></g></svg></span><div><strong>Smart PDF Studio</strong><small>All PDF Tools in One Place</small></div></div>
     <div><h4>Tools</h4><a href="#tools">All Tools</a><a href="#categories">Convert PDF</a><a href="#categories">Organize PDF</a><a href="#categories">Edit PDF</a><a href="#categories">Image Tools</a></div>
     <div><h4>Legal</h4><a href="about.html">About Us</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms &amp; Conditions</a><a href="disclaimer.html">Disclaimer</a><a href="cookies.html">Cookie Policy</a></div>
     <div><h4>Resources</h4><a href="sitemap.xml">Sitemap</a><a href="robots.txt">Robots.txt</a><a href="https://search.google.com/search-console/">Google Search Console</a><a href="https://www.google.com/adsense/">Google AdSense</a></div>
