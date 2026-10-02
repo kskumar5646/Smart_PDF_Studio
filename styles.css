@@ -54,3 +54,20 @@ footer{padding-top:17px}
 
 /* COLORFUL TOOL SVG PRESENTATION */
 .icon svg,.bigicon svg{width:100%;height:100%;display:block}.toolSvg{overflow:visible}.popular .bigicon{width:47px;height:47px}.tool .icon{width:47px;height:47px;padding:0;background:transparent}.tool .icon .toolSvg{width:47px;height:47px}.popular .bigicon .toolSvg{width:47px;height:47px}.toolGrid .tool .icon{border-radius:13px}
+
+
+/* REFINED REFERENCE HERO + BRAND MARK */
+.brandMark{width:58px;height:58px;background:linear-gradient(145deg,#079cff,#0051bb);box-shadow:0 10px 28px #00b8ff45;overflow:visible}
+.brandMark .brandSvg{width:58px;height:58px;display:block}
+.smallMark{width:45px;height:45px}.smallMark .brandSvg{width:45px;height:45px}
+.heroVisual{min-height:330px;display:flex;align-items:center;justify-content:center;overflow:visible}
+.heroGlow{width:500px;height:320px;right:2%;top:4px;background:radial-gradient(circle,#0b83f5b8 0,#006ee84a 43%,transparent 73%);filter:blur(2px)}
+.heroArt{position:absolute;width:min(560px,108%);height:auto;right:-1%;top:0;z-index:4;overflow:visible}
+.floatIcon{display:none}
+.heroTag{display:none}
+.trustIcon{font-size:13px!important;font-weight:900!important;color:#fff!important;background:#0878e8!important;box-shadow:0 5px 12px #001d4a55}
+.popular .bigicon{width:58px;height:58px}
+.popular .bigicon .toolSvg{width:58px;height:58px}
+.tool .icon{width:54px;height:54px}.tool .icon .toolSvg{width:54px;height:54px}
+@media(max-width:1050px){.heroArt{right:-7%;width:560px}}
+@media(max-width:760px){.brandMark{width:46px;height:46px}.brandMark .brandSvg{width:46px;height:46px}.heroVisual{min-height:300px}.heroArt{width:540px;right:-18%;top:0}}
