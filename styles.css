@@ -41,3 +41,13 @@ footer{padding-top:17px}
  .popularSection,.explore,.why{padding-left:20px;padding-right:20px}
  .allTools{display:none}
 }
+
+/* SVG ICON SYSTEM */
+.icon svg,.bigicon svg,.catIcon svg,.workspaceIcon svg{width:25px;height:25px;display:block}
+.bigicon svg{width:27px;height:27px}
+.catIcon svg{width:23px;height:23px}
+.tool .icon{display:grid;place-items:center}
+.popular .bigicon{display:grid;place-items:center;color:#fff}
+.popular:nth-child(2) .bigicon,.popular:nth-child(3) .bigicon,.popular:nth-child(4) .bigicon{color:#fff}
+.toolGrid .tool{overflow:hidden}
+.toolGrid .tool .icon{border-radius:13px}
