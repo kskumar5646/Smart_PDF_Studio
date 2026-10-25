@@ -555,7 +555,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         });
 
         const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-        firstPage.drawText('Digitally Signed with Smart PDF Studio', {
+        firstPage.drawText('Signature mark added with Smart PDF Studio', {
           x: 48,
           y: 80,
           size: 9,
@@ -571,7 +571,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           color: rgb(0.3, 0.35, 0.4),
         });
 
-        firstPage.drawText('Verified Client-Side Signature', {
+        firstPage.drawText('Visual signature mark (not cryptographically verified)', {
           x: 48,
           y: 50,
           size: 8,
@@ -586,7 +586,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         setProcessingState({
           status: 'success',
           progress: 100,
-          stageMessage: 'Visible signature mark applied successfully!',
+          stageMessage: 'Visible signature mark added. This is not a cryptographic digital signature.',
           resultUrl: url,
           resultFileName: `signed_${files[0].name}`,
           resultSize: blob.size,
