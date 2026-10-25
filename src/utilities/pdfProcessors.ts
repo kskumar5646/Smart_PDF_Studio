@@ -331,13 +331,18 @@ export async function extractTextFromPdf(file: File): Promise<string> {
     return simpleStrings.slice(0, 50).join('\n\n');
   }
 
-  return 'Document text extracted successfully. (No raw uncompressed text streams detected in this specific PDF structure).';
+  return 'Text extraction could not reliably read this PDF. It may use compressed streams, embedded fonts, or scanned pages. Use a PDF.js-based extractor or OCR engine for this document.';
 }
 
 // 11. PDF to Editable Word (.docx compatible file)
 export async function pdfToWordDocx(file: File): Promise<Blob> {
   const extracted = await extractTextFromPdf(file);
   const title = file.name.replace(/\.[^/.]+$/, '');
+  const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char] || char);
+  const safeTitle = escapeHtml(title);
+  const safeExtracted = escapeHtml(extracted);
 
   // Generate an HTML-based Word document with MimeType application/msword
   // Fully recognized by Microsoft Word, LibreOffice, Apple Pages, Google Docs!
@@ -345,7 +350,7 @@ export async function pdfToWordDocx(file: File): Promise<Blob> {
     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
     <head>
       <meta charset="utf-8">
-      <title>${title}</title>
+      <title>${safeTitle}</title>
       <style>
         body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #1a1a1a; margin: 40px; }
         h1 { color: #0284c7; font-size: 18pt; border-bottom: 2px solid #0284c7; padding-bottom: 6px; }
@@ -354,7 +359,7 @@ export async function pdfToWordDocx(file: File): Promise<Blob> {
       </style>
     </head>
     <body>
-      <h1>${title}</h1>
+      <h1>${safeTitle}</h1>
       <p>${extracted.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>
       <div class="footer">Converted locally via Smart PDF Studio – Fast, Secure, Private.</div>
     </body>
