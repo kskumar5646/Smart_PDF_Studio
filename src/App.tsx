@@ -7,16 +7,16 @@ import React, { useState, useEffect } from 'react';
 import { TOOLS, POPULAR_TOOL_IDS } from './tools/toolRegistry';
 import { ToolDefinition, ToolCategory, SupportedLanguage } from './types';
 import { TRANSLATIONS, SUPPORTED_LANGUAGES } from './translations';
-import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { PopularTools } from './components/PopularTools';
-import { CategoryGrid } from './components/CategoryGrid';
-import { ToolGrid } from './components/ToolGrid';
-import { ToolWorkspace } from './components/ToolWorkspace';
-import { WhyChooseUs } from './components/WhyChooseUs';
-import { Footer } from './components/Footer';
-import { AboutModal } from './components/AboutModal';
-import { ContactModal } from './components/ContactModal';
+import { Header } from './Components/Header';
+import { Hero } from './Components/Hero';
+import { PopularTools } from './Components/PopularTools';
+import { CategoryGrid } from './Components/CategoryGrid';
+import { ToolGrid } from './Components/ToolGrid';
+import { ToolWorkspace } from './Components/ToolWorkspace';
+import { WhyChooseUs } from './Components/WhyChooseUs';
+import { Footer } from './Components/Footer';
+import { AboutModal } from './Components/AboutModal';
+import { ContactModal } from './Components/ContactModal';
 
 export default function App() {
   const [currentLang, setCurrentLang] = useState<SupportedLanguage>(() => {
