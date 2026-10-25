@@ -530,23 +530,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         if (protectPassword !== confirmPassword) throw new Error('Passwords do not match.');
 
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Preparing a protected PDF copy...' }));
-        const pdfBytes = await files[0].arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes);
-        // Save PDF with updated metadata and secured streams
-        pdfDoc.setTitle(`Protected - ${files[0].name}`);
-        const saved = await pdfDoc.save();
-        const blob = uint8ArrayToBlob(saved);
-        const url = URL.createObjectURL(blob);
-
-        setProcessingState({
-          status: 'success',
-          progress: 100,
-          stageMessage: 'Protected PDF copy created. This browser build does not add a PDF password encryption layer.',
-          resultUrl: url,
-          resultFileName: `protected_${files[0].name}`,
-          resultSize: blob.size,
-        });
-        return;
+        throw new Error('Real PDF password encryption is not available in this browser build. No file was generated.');
       }
 
       // 18. Sign PDF (Interactive Signature)
@@ -610,7 +594,22 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         return;
       }
 
-      // Fallback for remaining browser tools (e.g. Extract, Remove, Duplicate, Flatten, Info, etc.)
+      // These catalogue entries currently have no dedicated processor.
+      // Fail honestly rather than returning an unchanged PDF as a successful conversion.
+      const unsupportedToolIds = new Set([
+        'pdf-to-jpg', 'pdf-to-excel', 'resize-pdf', 'extract-pages',
+        'remove-pages', 'reorder-pages', 'duplicate-pages', 'organize-pdf',
+        'pdf-to-png', 'text-to-pdf', 'html-to-pdf', 'word-to-pdf',
+        'excel-to-pdf', 'powerpoint-to-pdf', 'pdf-to-powerpoint', 'pdf-to-pdfa',
+        'pdf-metadata', 'pdf-annotation', 'unlock-pdf', 'redact-pdf',
+        'compare-pdfs', 'pdf-page-preview', 'pdf-info', 'search-pdf',
+        'scan-to-pdf', 'letter-to-pdf', 'poster-to-pdf',
+      ]);
+      if (unsupportedToolIds.has(tool.id)) {
+        throw new Error(`${tool.name} is not implemented yet. No output file was created.`);
+      }
+
+      // Fallback for simple pass-through operations only.
       if (files.length > 0) {
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Processing document...' }));
         const pdfBytes = await files[0].arrayBuffer();
