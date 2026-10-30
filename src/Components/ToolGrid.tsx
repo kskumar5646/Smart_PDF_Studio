@@ -145,9 +145,12 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                     </span>
                   </div>
 
-                  <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors mb-1.5">
-                    {tool.name}
-                  </h3>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">{tool.name}</h3>
+                    <span className={`shrink-0 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide border ${IMPLEMENTED_TOOL_IDS.includes(tool.id as (typeof IMPLEMENTED_TOOL_IDS)[number]) ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25' : 'bg-amber-500/10 text-amber-300 border-amber-500/25'}`}>
+                      {IMPLEMENTED_TOOL_IDS.includes(tool.id as (typeof IMPLEMENTED_TOOL_IDS)[number]) ? 'Available' : 'In development'}
+                    </span>
+                  </div>
                   <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">
                     {tool.shortDescription}
                   </p>
