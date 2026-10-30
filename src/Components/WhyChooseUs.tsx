@@ -21,7 +21,7 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ t }) => {
       title: t.badge2Title,
       subtitle: t.badge2Sub,
       description:
-        'Your sensitive documents, signatures, tax returns, and photos never touch external servers or cloud storage. Total client-side confidentiality.',
+        'Supported document operations process files locally in your browser. OCR may download language and engine resources; document files are not sent to our processing server.',
       color: 'from-emerald-500 to-teal-600',
     },
     {
@@ -29,7 +29,7 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ t }) => {
       title: t.badge3Title,
       subtitle: t.badge3Sub,
       description:
-        'Harnesses multi-threaded WebAssembly, Web Workers, and hardware accelerated canvas rendering for instantaneous document transformations.',
+        'Uses browser APIs and specialized engines. Processing speed depends on file size, browser memory, and device performance.',
       color: 'from-blue-500 to-indigo-600',
     },
     {
@@ -37,7 +37,7 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ t }) => {
       title: t.badge4Title,
       subtitle: t.badge4Sub,
       description:
-        'No paywalls, hidden subscription fees, watermark penalties, or file size restrictions. Truly unrestricted utility for everyone.',
+        'Free to use without an account. Very large files may be limited by available browser memory and device performance.',
       color: 'from-purple-500 to-pink-600',
     },
   ];
@@ -86,7 +86,7 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ t }) => {
 
                 <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center gap-2 text-xs font-medium text-slate-400">
                   <CheckCircle className="w-4 h-4 text-emerald-400" />
-                  <span>Verified Browser-Side</span>
+                  <span>Local processing where supported</span>
                 </div>
               </div>
             );
