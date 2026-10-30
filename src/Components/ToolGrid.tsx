@@ -154,6 +154,11 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                   <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">
                     {tool.shortDescription}
                   </p>
+                  <p className="text-[10px] text-slate-500 mt-2">
+                    Input: {tool.inputType === 'multiple-pdf' ? 'Multiple PDFs' : tool.inputType === 'multiple-images' ? 'Multiple images' : tool.inputType === 'pdf' ? 'PDF' : tool.inputType === 'image' ? 'Image' : tool.inputType === 'text' ? 'Text' : tool.inputType === 'form' ? 'Form' : 'None'}
+                    <span className="mx-1.5 text-slate-700">·</span>
+                    Output: {tool.outputType.toUpperCase()}
+                  </p>
                 </div>
 
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-semibold text-slate-400 group-hover:text-cyan-400">
