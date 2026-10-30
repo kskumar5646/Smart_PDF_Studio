@@ -667,6 +667,37 @@ export const TOOLS: ToolDefinition[] = [
   },
 ];
 
+// Only list tools that currently have an implemented processing path.
+// Some have documented limits (e.g. basic PDF compression and visible, non-certificate signatures).
+export const IMPLEMENTED_TOOL_IDS = [
+  "image-compressor",
+  "compress-image",
+  "merge-pdf",
+  "compress-pdf",
+  "split-pdf",
+  "rotate-pdf",
+  "watermark-pdf",
+  "page-numbers",
+  "crop-pdf",
+  "jpg-to-pdf",
+  "images-to-pdf",
+  "pdf-to-text",
+  "ocr-pdf",
+  "image-ocr",
+  "pdf-to-word",
+  "qr-code-maker",
+  "qr-code-to-pdf",
+  "barcode-maker",
+  "invoice-maker",
+  "resume-builder",
+  "certificate-maker",
+  "sign-pdf",
+  "extract-pages",
+  "remove-pages",
+  "reorder-pages",
+  "duplicate-pages"
+] as const;
+
 export const POPULAR_TOOL_IDS = ['image-compressor', 'pdf-to-word', 'merge-pdf', 'jpg-to-pdf'];
 
 export const CATEGORIES = [
