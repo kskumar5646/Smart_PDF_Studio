@@ -233,7 +233,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       }
 
       // 4. Split PDF / Split by count
-      if (tool.id === 'split-pdf' || tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') {
+      if (tool.id === 'split-pdf' || tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages' || tool.id === 'extract-pages' || tool.id === 'remove-pages' || tool.id === 'reorder-pages' || tool.id === 'duplicate-pages') {
         if (files.length === 0) throw new Error('Please select a PDF file.');
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Extracting selected pages...' }));
 
