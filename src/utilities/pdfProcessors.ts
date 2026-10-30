@@ -340,7 +340,7 @@ export async function extractTextFromPdf(file: File): Promise<string> {
   }
 
   const extracted = pages.map((page, index) => `--- Page ${index + 1} ---\n${page}`).join('\n\n');
-  if (!extracted.replace(/--- Page \\d+ ---/g, '').trim()) {
+  if (!extracted.replace(/--- Page \d+ ---/g, '').trim()) {
     throw new Error('No selectable text was found. This may be a scanned PDF; use OCR PDF to recognize image-based text.');
   }
   return extracted;
@@ -391,7 +391,7 @@ export async function recognizePdfText(file: File, language = 'eng'): Promise<st
     await pdfDocument.destroy();
   }
   const text = pages.join('\n\n').trim();
-  if (!text.replace(/--- Page \\d+ ---/g, '').trim()) {
+  if (!text.replace(/--- Page \d+ ---/g, '').trim()) {
     throw new Error('OCR could not detect readable text in this PDF.');
   }
   return text;
@@ -409,7 +409,7 @@ export async function pdfToWordDocx(file: File): Promise<Blob> {
   const doc = new Document({
     sections: [{
       children: [
-        new Paragraph({ text: file.name.replace(/\\.[^/.]+$/, ''), heading: 'Title' }),
+        new Paragraph({ text: file.name.replace(/\.[^/.]+$/, ''), heading: 'Title' }),
         ...paragraphs,
       ],
     }],
