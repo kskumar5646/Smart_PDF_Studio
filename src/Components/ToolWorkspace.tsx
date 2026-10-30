@@ -438,7 +438,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           progress: 100,
           stageMessage: 'Converted to Word document successfully!',
           resultUrl: url,
-          resultFileName: `${files[0].name.replace(/\.[^/.]+$/, '')}.doc`,
+          resultFileName: `${files[0].name.replace(/\.[^/.]+$/, '')}.docx`,
           originalSize: files[0].size,
           resultSize: docxBlob.size,
         });
