@@ -1185,7 +1185,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   ].map(([label, key]) => (
                     <label key={key} className="block text-xs font-semibold text-slate-300">
                       {label}
-                      <input type="text" value={invoiceData[key as keyof typeof invoiceData] as string}
+                      <input type={key === 'date' ? 'date' : 'text'} value={invoiceData[key as keyof typeof invoiceData] as string}
                         onChange={(e) => setInvoiceData({ ...invoiceData, [key]: e.target.value })}
                         className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                     </label>
@@ -1212,6 +1212,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                         className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                     </div>
                   ))}
+                  <button type="button" onClick={() => setInvoiceData({ ...invoiceData, items: [...invoiceData.items, { description: '', qty: 1, rate: 0 }] })}
+                    className="px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/20">
+                    + Add invoice item
+                  </button>
                 </div>
               </div>
             )}
@@ -1236,7 +1240,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                         onChange={(e) => setResumeData({ ...resumeData, [key]: e.target.value })}
                         className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                     ) : (
-                      <input type="text" value={resumeData[key as keyof typeof resumeData]}
+                      <input type={key === 'email' ? 'email' : key === 'phone' ? 'tel' : 'text'} value={resumeData[key as keyof typeof resumeData]}
                         onChange={(e) => setResumeData({ ...resumeData, [key]: e.target.value })}
                         className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                     )}
@@ -1257,7 +1261,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 ].map(([label, key]) => (
                   <label key={key} className="block text-xs font-semibold text-slate-300">
                     {label}
-                    <input type="text" value={certData[key as keyof typeof certData]}
+                    <input type={key === 'date' ? 'date' : 'text'} value={certData[key as keyof typeof certData]}
                       onChange={(e) => setCertData({ ...certData, [key]: e.target.value })}
                       className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                   </label>
