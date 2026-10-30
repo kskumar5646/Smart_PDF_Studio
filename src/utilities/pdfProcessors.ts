@@ -251,11 +251,16 @@ export async function imagesToPdf(files: File[]): Promise<Uint8Array> {
     const bytes = await file.arrayBuffer();
     let embeddedImg;
 
-    if (file.type.includes('png')) {
+    if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
       embeddedImg = await pdfDoc.embedPng(bytes);
-    } else {
-      // Default to jpg embed
+    } else if (file.type === 'image/jpeg' || /\\.(jpe?g)$/i.test(file.name)) {
       embeddedImg = await pdfDoc.embedJpg(bytes);
+    } else if (file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp')) {
+      // pdf-lib does not embed WebP directly; convert it locally to JPEG first.
+      const converted = await compressImageFile(file, 0.95, 'image/jpeg');
+      embeddedImg = await pdfDoc.embedJpg(await converted.blob.arrayBuffer());
+    } else {
+      throw new Error(`Unsupported image format: ${file.name}. Use JPG, PNG or WebP.`);
     }
 
     const { width, height } = embeddedImg;
