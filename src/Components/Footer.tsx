@@ -32,11 +32,11 @@ export const Footer: React.FC<FooterProps> = ({
               <BrandLogo size={42} showText={true} subtitle={t.appSubtitle} />
             </button>
             <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-sm">
-              Smart PDF Studio provides 60 fast, secure, and private PDF and image tools running 100% locally in your browser. No registration, no server uploads, total privacy.
+              Smart PDF Studio offers browser-based PDF and image utilities. Each tool card shows whether its processing workflow is available or still in development. Supported document operations run locally in your browser.
             </p>
             <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs pt-1">
               <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-              <span>Zero server document storage guaranteed</span>
+              <span>Files are processed locally by supported tools</span>
             </div>
           </div>
 
@@ -51,7 +51,7 @@ export const Footer: React.FC<FooterProps> = ({
                   onClick={() => onNavigateCategory('All')}
                   className="hover:text-cyan-400 transition cursor-pointer"
                 >
-                  All 60 Tools
+                  All Tools
                 </button>
               </li>
               <li>
