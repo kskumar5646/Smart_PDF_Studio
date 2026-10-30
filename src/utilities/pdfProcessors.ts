@@ -418,119 +418,40 @@ export async function pdfToWordDocx(file: File): Promise<Blob> {
 }
 
 // 12. QR Code Generator on Canvas
-export function generateQrCodeCanvas(
-  text: string,
-  size = 280
-): HTMLCanvasElement {
+// Standards-compliant QR generation using a real QR encoder.
+export async function generateQrCodeCanvas(text: string, size = 400): Promise<HTMLCanvasElement> {
+  if (!text.trim()) throw new Error('Enter text or a URL to generate a QR code.');
+  const QRCode = (await import('qrcode')).default;
   const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return canvas;
-
-  // Background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, size, size);
-
-  // Generate pseudorandom deterministic grid based on string hash
-  const modules = 25;
-  const cellSize = (size - 40) / modules;
-  const offset = 20;
-
-  // Hash function
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = (hash << 5) - hash + text.charCodeAt(i);
-    hash |= 0;
-  }
-
-  // Draw 3 corner position markers (Standard QR format)
-  const drawCornerMarker = (x: number, y: number) => {
-    ctx.fillStyle = '#0284c7';
-    ctx.fillRect(offset + x * cellSize, offset + y * cellSize, 7 * cellSize, 7 * cellSize);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(offset + (x + 1) * cellSize, offset + (y + 1) * cellSize, 5 * cellSize, 5 * cellSize);
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(offset + (x + 2) * cellSize, offset + (y + 2) * cellSize, 3 * cellSize, 3 * cellSize);
-  };
-
-  drawCornerMarker(0, 0); // Top-left
-  drawCornerMarker(modules - 7, 0); // Top-right
-  drawCornerMarker(0, modules - 7); // Bottom-left
-
-  // Draw data modules
-  ctx.fillStyle = '#0f172a';
-  for (let row = 0; row < modules; row++) {
-    for (let col = 0; col < modules; col++) {
-      // Skip corners
-      if (
-        (row < 8 && col < 8) ||
-        (row < 8 && col >= modules - 8) ||
-        (row >= modules - 8 && col < 8)
-      ) {
-        continue;
-      }
-
-      const bit = Math.abs(Math.sin(hash + row * 17 + col * 31) * 1000) % 2 > 0.95;
-      if (bit) {
-        ctx.fillRect(
-          offset + col * cellSize,
-          offset + row * cellSize,
-          cellSize * 0.92,
-          cellSize * 0.92
-        );
-      }
-    }
-  }
-
+  await QRCode.toCanvas(canvas, text, {
+    width: size,
+    margin: 2,
+    errorCorrectionLevel: 'H',
+    color: { dark: '#0f172a', light: '#ffffff' },
+  });
   return canvas;
 }
 
-// 13. Barcode Generator on Canvas (Code 128 style)
-export function generateBarcodeCanvas(text: string, width = 380, height = 140): HTMLCanvasElement {
+// Standards-compliant Code 128 barcode rendered by JsBarcode.
+export async function generateBarcodeCanvas(text: string, width = 500, height = 160): Promise<HTMLCanvasElement> {
+  if (!text.trim()) throw new Error('Enter a value to generate a barcode.');
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return canvas;
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
-
-  ctx.fillStyle = '#0f172a';
-  const startX = 25;
-  const barHeight = height - 45;
-  let currX = startX;
-
-  // Guard bars
-  ctx.fillRect(currX, 15, 3, barHeight);
-  currX += 5;
-  ctx.fillRect(currX, 15, 2, barHeight);
-  currX += 6;
-
-  // Encode string characters
-  for (let i = 0; i < text.length; i++) {
-    const code = text.charCodeAt(i);
-    const pattern = [(code % 3) + 1, ((code >> 2) % 3) + 1, ((code >> 4) % 2) + 1];
-    pattern.forEach((w, idx) => {
-      if (idx % 2 === 0) {
-        ctx.fillRect(currX, 15, w * 1.5, barHeight);
-      }
-      currX += (w + 1) * 2;
+  const JsBarcode = (await import('jsbarcode')).default;
+  try {
+    JsBarcode(canvas, text, {
+      format: 'CODE128',
+      width: 2,
+      height: Math.max(60, height - 45),
+      displayValue: true,
+      margin: 12,
+      background: '#ffffff',
+      lineColor: '#0f172a',
+      font: 'monospace',
+      fontSize: 14,
     });
+  } catch {
+    throw new Error('This value cannot be encoded as a Code 128 barcode.');
   }
-
-  // End guard
-  ctx.fillRect(currX, 15, 2, barHeight);
-  currX += 5;
-  ctx.fillRect(currX, 15, 3, barHeight);
-
-  // Text label below
-  ctx.font = '14px monospace';
-  ctx.fillStyle = '#334155';
-  ctx.textAlign = 'center';
-  ctx.fillText(text.toUpperCase(), width / 2, height - 12);
-
   return canvas;
 }
 
