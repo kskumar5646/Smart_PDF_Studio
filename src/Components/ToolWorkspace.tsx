@@ -616,11 +616,23 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           output = pdfDoc;
         } else {
           output = await PDFDocument.create();
-          const pageNumbers = tool.id === 'reorder-pages'
-            ? requested
-            : tool.id === 'duplicate-pages'
-            ? requested
-            : [...new Set(requested)];
+          let pageNumbers: number[];
+          if (tool.id === 'reorder-pages') {
+            const unique = new Set(requested);
+            if (requested.length !== pageCount || unique.size !== pageCount) {
+              throw new Error(`To reorder pages, enter every page exactly once, for example 3,1,2 for a 3-page PDF.`);
+            }
+            pageNumbers = requested;
+          } else if (tool.id === 'duplicate-pages') {
+            const duplicateSet = new Set(requested);
+            pageNumbers = [];
+            for (let page = 1; page <= pageCount; page++) {
+              pageNumbers.push(page);
+              if (duplicateSet.has(page)) pageNumbers.push(page);
+            }
+          } else {
+            pageNumbers = [...new Set(requested)];
+          }
           const copied = await output.copyPages(pdfDoc, pageNumbers.map((n) => n - 1));
           copied.forEach((page) => output.addPage(page));
         }
