@@ -1155,110 +1155,92 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             {/* 10. Invoice Maker Form */}
             {tool.id === 'invoice-maker' && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Your Company
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    ['Company name', 'companyName'],
+                    ['Client name', 'clientName'],
+                    ['Invoice number', 'invoiceNumber'],
+                    ['Invoice date', 'date'],
+                  ].map(([label, key]) => (
+                    <label key={key} className="block text-xs font-semibold text-slate-300">
+                      {label}
+                      <input type="text" value={invoiceData[key as keyof typeof invoiceData] as string}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, [key]: e.target.value })}
+                        className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                     </label>
-                    <input
-                      type="text"
-                      value={invoiceData.companyName}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, companyName: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Client Name
-                    </label>
-                    <input
-                      type="text"
-                      value={invoiceData.clientName}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, clientName: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Invoice #
-                    </label>
-                    <input
-                      type="text"
-                      value={invoiceData.invoiceNumber}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
+                  ))}
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Tax rate (%)
+                    <input type="number" min="0" max="100" value={invoiceData.taxRate}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, taxRate: Number(e.target.value) })}
+                      className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-slate-300">Invoice item</p>
+                  {invoiceData.items.map((item, index) => (
+                    <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <input aria-label="Item description" placeholder="Description" value={item.description}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, items: invoiceData.items.map((row, i) => i === index ? { ...row, description: e.target.value } : row) })}
+                        className="sm:col-span-1 p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                      <input aria-label="Quantity" type="number" min="1" value={item.qty}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, items: invoiceData.items.map((row, i) => i === index ? { ...row, qty: Number(e.target.value) } : row) })}
+                        className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                      <input aria-label="Rate" type="number" min="0" step="0.01" value={item.rate}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, items: invoiceData.items.map((row, i) => i === index ? { ...row, rate: Number(e.target.value) } : row) })}
+                        className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
             {/* 11. Resume Builder Form */}
             {tool.id === 'resume-builder' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={resumeData.fullName}
-                      onChange={(e) => setResumeData({ ...resumeData, fullName: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Target Role / Job Title
-                    </label>
-                    <input
-                      type="text"
-                      value={resumeData.jobTitle}
-                      onChange={(e) => setResumeData({ ...resumeData, jobTitle: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Summary
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  ['Full name', 'fullName'],
+                  ['Target job title', 'jobTitle'],
+                  ['Email', 'email'],
+                  ['Phone', 'phone'],
+                  ['Professional summary', 'summary'],
+                  ['Skills', 'skills'],
+                  ['Experience', 'experience'],
+                  ['Education', 'education'],
+                ].map(([label, key]) => (
+                  <label key={key} className="block text-xs font-semibold text-slate-300">
+                    {label}
+                    {['summary', 'skills', 'experience', 'education'].includes(key) ? (
+                      <textarea rows={key === 'summary' ? 2 : 3} value={resumeData[key as keyof typeof resumeData]}
+                        onChange={(e) => setResumeData({ ...resumeData, [key]: e.target.value })}
+                        className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                    ) : (
+                      <input type="text" value={resumeData[key as keyof typeof resumeData]}
+                        onChange={(e) => setResumeData({ ...resumeData, [key]: e.target.value })}
+                        className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                    )}
                   </label>
-                  <textarea
-                    rows={2}
-                    value={resumeData.summary}
-                    onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })}
-                    className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                  />
-                </div>
+                ))}
               </div>
             )}
 
             {/* 12. Certificate Maker Form */}
             {tool.id === 'certificate-maker' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Recipient Full Name
+                {[
+                  ['Recipient full name', 'recipientName'],
+                  ['Certificate title', 'title'],
+                  ['Reason / achievement', 'reason'],
+                  ['Issue date', 'date'],
+                  ['Issuing authority', 'issuer'],
+                ].map(([label, key]) => (
+                  <label key={key} className="block text-xs font-semibold text-slate-300">
+                    {label}
+                    <input type="text" value={certData[key as keyof typeof certData]}
+                      onChange={(e) => setCertData({ ...certData, [key]: e.target.value })}
+                      className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                   </label>
-                  <input
-                    type="text"
-                    value={certData.recipientName}
-                    onChange={(e) => setCertData({ ...certData, recipientName: e.target.value })}
-                    className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Certificate Title
-                  </label>
-                  <input
-                    type="text"
-                    value={certData.title}
-                    onChange={(e) => setCertData({ ...certData, title: e.target.value })}
-                    className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                  />
-                </div>
+                ))}
               </div>
             )}
 
