@@ -771,6 +771,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 <p className="text-slate-400 text-xs sm:text-sm mt-0.5">
                   {tool.description}
                 </p>
+                <div className="flex flex-wrap gap-2 mt-2 text-[10px] font-semibold">
+                  <span className="px-2 py-1 rounded-md bg-slate-900 text-slate-300 border border-slate-700">Input: {tool.inputType === 'multiple-pdf' ? 'Multiple PDFs' : tool.inputType === 'multiple-images' ? 'Multiple images' : tool.inputType === 'pdf' ? 'PDF' : tool.inputType === 'image' ? 'Image' : tool.inputType === 'text' ? 'Text' : tool.inputType === 'form' ? 'Form' : 'None'}</span>
+                  <span className="px-2 py-1 rounded-md bg-slate-900 text-cyan-300 border border-slate-700">Output: {tool.outputType.toUpperCase()}</span>
+                </div>
               </div>
             </div>
 
