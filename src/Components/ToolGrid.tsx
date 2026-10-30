@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ToolDefinition, ToolCategory } from '../types';
-import { CATEGORIES } from '../tools/toolRegistry';
+import { CATEGORIES, IMPLEMENTED_TOOL_IDS } from '../tools/toolRegistry';
 import { ToolIcon } from '../icons/ToolIcons';
 import { TranslationDictionary } from '../translations';
 import { Search, Layers, ArrowRight } from 'lucide-react';
@@ -89,7 +89,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                 setInternalSearch(e.target.value);
                 onSearchChange(e.target.value);
               }}
-              placeholder="Filter 60 tools..."
+              placeholder={`Filter ${tools.length} tools...`}
               className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#07152b] border border-cyan-500/20 text-white text-xs sm:text-sm placeholder-slate-400 focus:outline-hidden focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition"
             />
           </div>
@@ -99,7 +99,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
         <div className="flex items-center justify-between text-xs text-slate-400 mb-6 px-1">
           <span>
             Showing <strong className="text-cyan-400">{filteredTools.length}</strong> of{' '}
-            <strong className="text-white">60</strong> tools
+            <strong className="text-white">{tools.length}</strong> tools
           </span>
           {activeSearch && (
             <button
