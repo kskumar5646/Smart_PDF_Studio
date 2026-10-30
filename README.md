@@ -1,6 +1,6 @@
 # Smart PDF Studio
 
-Smart PDF Studio is a browser-first PDF and image toolbox built with React, TypeScript, Vite, Tailwind CSS, pdf-lib, jsPDF and Web APIs. User files are processed in the browser; this project does not require a document-processing backend.
+Smart PDF Studio is a browser-first PDF and image toolbox built with React, TypeScript, Vite, Tailwind CSS, pdf-lib, PDF.js, Tesseract.js, docx, QRCode and JsBarcode.
 
 ## Development
 
@@ -9,15 +9,29 @@ npm install
 npm run dev
 ```
 
-## Production build
+## Validation and production build
 
 ```bash
+npm run lint
 npm run build
 npm run preview
 ```
 
-The production output is `dist/`. The project includes deployment configuration for GitHub Pages and Cloudflare static assets.
+GitHub Actions runs TypeScript validation and a production build for pushes to the quality branch and pull requests targeting `main`.
 
-## Important capability note
+## Tool catalogue and honest capability status
 
-The tool catalogue contains 60 tools. Some advanced operations (for example cryptographic PDF password encryption, full OCR, and high-fidelity PDF-to-office conversion) require specialist engines that are not bundled into this browser-only build. The UI does not upload documents to a server to perform those operations.
+The catalogue contains 60 entries. The UI marks each tool as **Available** or **In development**. A catalogue entry is not a claim that its processor is finished.
+
+The currently implemented workflows include image compression; PDF merge, basic object-stream re-save, split, rotate, crop, watermark and page numbers; extract/remove/reorder/duplicate pages; selectable-text extraction; OCR for PDFs and images; text-based PDF-to-DOCX export; real QR and Code 128 barcode generation; invoice, resume and certificate PDFs; and visible signature-image placement.
+
+## Important limitations
+
+- Basic PDF re-saving does not guarantee a smaller file; images inside PDFs are not recompressed.
+- OCR runs in the browser using Tesseract.js. The OCR engine and selected language data may be downloaded when first used. Large PDFs can be slow and memory intensive.
+- PDF-to-DOCX exports extracted text into a genuine DOCX file. It does not preserve complex page layouts, tables or exact typography.
+- The Sign PDF tool adds a visible signature image. It is **not** a certificate-backed cryptographic digital signature.
+- Password encryption, secure redaction, Office-to-PDF conversion, full PDF/A validation and several advanced tools remain unavailable and are clearly marked.
+- Browser memory and device performance limit maximum practical file sizes.
+
+Supported document-processing workflows run client-side; this project does not require a document-processing backend.
