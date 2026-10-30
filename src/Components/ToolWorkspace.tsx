@@ -759,6 +759,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 <div className="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-500/30 mb-1">
                   {tool.category}
                 </div>
+                <div className={`w-fit px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border mb-1 ${IMPLEMENTED_TOOL_IDS.includes(tool.id as (typeof IMPLEMENTED_TOOL_IDS)[number]) ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25' : 'bg-amber-500/10 text-amber-300 border-amber-500/25'}`}>
+                  {IMPLEMENTED_TOOL_IDS.includes(tool.id as (typeof IMPLEMENTED_TOOL_IDS)[number]) ? 'Processing available' : 'In development — not yet available'}
+                </div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
                   {tool.name}
                 </h1>
