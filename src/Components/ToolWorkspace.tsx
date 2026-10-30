@@ -265,21 +265,30 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         if (files.length === 0) throw new Error('Please select a PDF file.');
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Extracting selected pages...' }));
 
-        // Parse range like "1-3" or "1,2,5"
+        // Parse comma-separated page numbers and ranges, validating every page.
         const pages: number[] = [];
-        if (splitRange.includes('-')) {
-          const parts = splitRange.split('-').map((s) => parseInt(s.trim()));
-          if (!isNaN(parts[0]) && !isNaN(parts[1])) {
-            for (let i = parts[0]; i <= parts[1]; i++) pages.push(i);
+        const source = await PDFDocument.load(await files[0].arrayBuffer());
+        const pageCount = source.getPageCount();
+        for (const token of splitRange.split(',')) {
+          const value = token.trim();
+          const range = value.match(/^(\\d+)\\s*-\\s*(\\d+)$/);
+          if (range) {
+            const first = Number(range[1]);
+            const last = Number(range[2]);
+            if (first < 1 || last < first || last > pageCount) {
+              throw new Error(`Enter a page range between 1 and ${pageCount}.`);
+            }
+            for (let page = first; page <= last; page++) pages.push(page);
+          } else if (/^\\d+$/.test(value)) {
+            const page = Number(value);
+            if (page < 1 || page > pageCount) throw new Error(`Page numbers must be between 1 and ${pageCount}.`);
+            pages.push(page);
+          } else {
+            throw new Error('Use page numbers like 1,2,5 or ranges like 1-3,6-8.');
           }
-        } else {
-          splitRange.split(',').forEach((num) => {
-            const p = parseInt(num.trim());
-            if (!isNaN(p)) pages.push(p);
-          });
         }
-
-        if (pages.length === 0) throw new Error('Enter a valid page range, such as 1-3 or 1,2,5.');
+        if (pages.length === 0) throw new Error('Enter at least one page number or range.');
+        if (new Set(pages).size !== pages.length) throw new Error('Do not repeat page numbers in the split range.');
         const validPages = pages;
         const splitBytes = await splitPdfFile(files[0], validPages);
         const blob = uint8ArrayToBlob(splitBytes);
