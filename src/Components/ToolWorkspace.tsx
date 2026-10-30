@@ -235,7 +235,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       }
 
       // 4. Split PDF / Split by count
-      if (tool.id === 'split-pdf' || tool.id === 'extract-pages' || tool.id === 'remove-pages' || tool.id === 'reorder-pages' || tool.id === 'duplicate-pages') {
+      if (tool.id === 'split-pdf') {
         if (files.length === 0) throw new Error('Please select a PDF file.');
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Extracting selected pages...' }));
 
@@ -1026,7 +1026,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             )}
 
             {/* 5. Split PDF settings */}
-            {(tool.id === 'split-pdf' || tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') && (
+            {(tool.id === 'split-pdf' || tool.id === 'extract-pages' || tool.id === 'remove-pages' || tool.id === 'reorder-pages' || tool.id === 'duplicate-pages') && (
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Page Range or Page Numbers to Extract
