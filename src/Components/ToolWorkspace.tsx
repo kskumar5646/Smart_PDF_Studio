@@ -80,34 +80,31 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 
   // Form Tool States (Invoice, Resume, Certificate)
   const [invoiceData, setInvoiceData] = useState({
-    invoiceNumber: 'INV-2026-001',
-    companyName: 'Studio Digital Ltd',
-    clientName: 'Acme Corporation',
-    date: '2026-10-02',
-    taxRate: 10,
-    items: [
-      { description: 'Professional PDF Consulting', qty: 1, rate: 250 },
-      { description: 'Document Design & Security Audit', qty: 2, rate: 120 },
-    ],
+    invoiceNumber: '',
+    companyName: '',
+    clientName: '',
+    date: '',
+    taxRate: 0,
+    items: [{ description: '', qty: 1, rate: 0 }],
   });
 
   const [resumeData, setResumeData] = useState({
-    fullName: 'Alex Morgan',
-    jobTitle: 'Senior Software Engineer',
-    email: 'alex.morgan@example.com',
-    phone: '+1 (555) 019-2834',
-    summary: 'Senior software architect with over 8 years of experience designing high-throughput client-side document processing systems, web tools, and browser privacy platforms.',
-    skills: 'TypeScript, React, Node.js, WebAssembly, Security Architecture, UI/UX Systems',
-    experience: 'Principal Frontend Engineer — CloudStudio (2022 - Present)\n• Designed real-time client-side PDF manipulation architecture\n• Improved user throughput by 300%',
-    education: 'B.S. in Computer Science — State University of Technology (2018 - 2022)',
+    fullName: '',
+    jobTitle: '',
+    email: '',
+    phone: '',
+    summary: '',
+    skills: '',
+    experience: '',
+    education: '',
   });
 
   const [certData, setCertData] = useState({
-    recipientName: 'Jordan Lee',
+    recipientName: '',
     title: 'CERTIFICATE OF ACHIEVEMENT',
-    reason: 'For outstanding commitment, continuous technical excellence, and dedication to privacy-first web standards.',
-    date: 'October 2, 2026',
-    issuer: 'Smart PDF Studio Board',
+    reason: '',
+    date: '',
+    issuer: '',
   });
 
   // Canvas Signature pad state
