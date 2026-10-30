@@ -652,17 +652,6 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     }
   };
 
-      throw new Error('Please provide an input file or configure settings.');
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An error occurred during processing.';
-      setProcessingState({
-        status: 'error',
-        progress: 0,
-        stageMessage: '',
-        errorMessage: message,
-      });
-    }
-  };
 
   // Reset workspace
   const handleReset = () => {
