@@ -309,7 +309,8 @@ export async function extractTextFromPdf(file: File): Promise<string> {
   }
   const pdfjs = await loadPdfJs();
   const data = new Uint8Array(await file.arrayBuffer());
-  const document = await pdfjs.getDocument({ data }).promise;
+  const loadingTask = pdfjs.getDocument({ data });
+  const document = await loadingTask.promise;
   const pages: string[] = [];
 
   try {
@@ -336,7 +337,7 @@ export async function extractTextFromPdf(file: File): Promise<string> {
       page.cleanup();
     }
   } finally {
-    await document.destroy();
+    await loadingTask.destroy();
   }
 
   const extracted = pages.map((page, index) => `--- Page ${index + 1} ---\n${page}`).join('\n\n');
@@ -366,7 +367,8 @@ export async function recognizePdfText(file: File, language = 'eng'): Promise<st
   }
   const pdfjs = await loadPdfJs();
   const data = new Uint8Array(await file.arrayBuffer());
-  const pdfDocument = await pdfjs.getDocument({ data }).promise;
+  const loadingTask = pdfjs.getDocument({ data });
+  const pdfDocument = await loadingTask.promise;
   const { createWorker } = await import('tesseract.js');
   const worker = await createWorker(language);
   const pages: string[] = [];
@@ -388,7 +390,7 @@ export async function recognizePdfText(file: File, language = 'eng'): Promise<st
     }
   } finally {
     await worker.terminate();
-    await pdfDocument.destroy();
+    await loadingTask.destroy();
   }
   const text = pages.join('\n\n').trim();
   if (!text.replace(/--- Page \d+ ---/g, '').trim()) {
