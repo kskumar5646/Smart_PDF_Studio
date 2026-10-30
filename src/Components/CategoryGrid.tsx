@@ -30,10 +30,11 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onSelectCategoryFilt
         {/* 8 Category Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {VISUAL_CATEGORIES.map((cat) => (
-            <div
+            <button
+              type="button"
               key={cat.id}
               onClick={() => onSelectCategoryFilter(cat.filterCategory as ToolCategory)}
-              className="group p-5 rounded-2xl bg-[#07152b] border border-cyan-500/15 hover:border-cyan-400/40 hover:bg-[#091b36] shadow-sm hover:shadow-cyan-500/10 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+              className="group w-full text-left p-5 rounded-2xl bg-[#07152b] border border-cyan-500/15 hover:border-cyan-400/40 hover:bg-[#091b36] shadow-sm hover:shadow-cyan-500/10 transition-all duration-200 cursor-pointer flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-3.5">
@@ -57,7 +58,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ onSelectCategoryFilt
             </div>
           ))}
         </div>
-      </div>
+      </button>
     </section>
   );
 };
