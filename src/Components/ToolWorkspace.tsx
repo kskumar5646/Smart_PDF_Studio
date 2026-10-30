@@ -121,7 +121,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const isAcceptedFile = (file: File): boolean => {
     const name = file.name.toLowerCase();
     if (tool.inputType === 'image' || tool.inputType === 'multiple-images') {
-      return file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(name);
+      return ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || /\.(jpg|jpeg|png|webp)$/i.test(name);
     }
     if (tool.id === 'word-to-pdf') return /\.(doc|docx)$/i.test(name);
     if (tool.id === 'excel-to-pdf') return /\.(xls|xlsx|csv)$/i.test(name);
