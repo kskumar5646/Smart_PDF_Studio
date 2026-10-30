@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { TOOLS, POPULAR_TOOL_IDS } from './tools/toolRegistry';
 import { ToolDefinition, ToolCategory, SupportedLanguage } from './types';
 import { TRANSLATIONS, SUPPORTED_LANGUAGES } from './translations';
@@ -12,7 +12,7 @@ import { Hero } from './Components/Hero';
 import { PopularTools } from './Components/PopularTools';
 import { CategoryGrid } from './Components/CategoryGrid';
 import { ToolGrid } from './Components/ToolGrid';
-import { ToolWorkspace } from './Components/ToolWorkspace';
+const ToolWorkspace = React.lazy(() => import('./Components/ToolWorkspace').then((module) => ({ default: module.ToolWorkspace })));
 import { WhyChooseUs } from './Components/WhyChooseUs';
 import { Footer } from './Components/Footer';
 import { AboutModal } from './Components/AboutModal';
@@ -159,7 +159,7 @@ export default function App() {
       <main className="flex-1">
         {activeTool ? (
           /* Dedicated Tool Workspace Page */
-          <ToolWorkspace tool={activeTool} onBack={handleBackToTools} t={t} />
+          <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-cyan-300 text-sm">Loading tool workspace…</div>}><ToolWorkspace tool={activeTool} onBack={handleBackToTools} t={t} /></Suspense>
         ) : (
           /* Homepage with Hero, Popular Tools, Category Grid, All 60 Tools & Why Choose Us */
           <>
