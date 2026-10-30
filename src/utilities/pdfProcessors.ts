@@ -253,7 +253,7 @@ export async function imagesToPdf(files: File[]): Promise<Uint8Array> {
 
     if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
       embeddedImg = await pdfDoc.embedPng(bytes);
-    } else if (file.type === 'image/jpeg' || /\\.(jpe?g)$/i.test(file.name)) {
+    } else if (file.type === 'image/jpeg' || file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg')) {
       embeddedImg = await pdfDoc.embedJpg(bytes);
     } else if (file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp')) {
       // pdf-lib does not embed WebP directly; convert it locally to JPEG first.
