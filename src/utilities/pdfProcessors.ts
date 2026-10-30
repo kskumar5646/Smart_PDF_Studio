@@ -366,15 +366,15 @@ export async function recognizePdfText(file: File, language = 'eng'): Promise<st
   }
   const pdfjs = await loadPdfJs();
   const data = new Uint8Array(await file.arrayBuffer());
-  const document = await pdfjs.getDocument({ data }).promise;
+  const pdfDocument = await pdfjs.getDocument({ data }).promise;
   const { createWorker } = await import('tesseract.js');
   const worker = await createWorker(language);
   const pages: string[] = [];
   try {
-    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
-      const page = await document.getPage(pageNumber);
+    for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
+      const page = await pdfDocument.getPage(pageNumber);
       const viewport = page.getViewport({ scale: 1.6 });
-      const canvas = document.createElement('canvas');
+      const canvas = window.document.createElement('canvas');
       canvas.width = Math.ceil(viewport.width);
       canvas.height = Math.ceil(viewport.height);
       const context = canvas.getContext('2d');
@@ -388,7 +388,7 @@ export async function recognizePdfText(file: File, language = 'eng'): Promise<st
     }
   } finally {
     await worker.terminate();
-    await document.destroy();
+    await pdfDocument.destroy();
   }
   const text = pages.join('\n\n').trim();
   if (!text.replace(/--- Page \\d+ ---/g, '').trim()) {
