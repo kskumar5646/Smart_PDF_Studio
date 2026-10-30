@@ -132,10 +132,11 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
             {filteredTools.map((tool) => (
-              <div
+              <button
+                type="button"
                 key={tool.id}
                 onClick={() => onSelectTool(tool)}
-                className="group p-5 rounded-2xl bg-[#07162d]/90 hover:bg-[#0a1e3d] border border-cyan-500/15 hover:border-cyan-400/40 shadow-sm hover:shadow-cyan-500/10 transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
+                className="group w-full text-left p-5 rounded-2xl bg-[#07162d]/90 hover:bg-[#0a1e3d] border border-cyan-500/15 hover:border-cyan-400/40 shadow-sm hover:shadow-cyan-500/10 transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3.5">
@@ -167,7 +168,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                     <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
