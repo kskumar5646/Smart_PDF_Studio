@@ -159,7 +159,7 @@ export const Footer: React.FC<FooterProps> = ({
                 </a>
               </li>
               <li>
-                <a href="#search-console" className="hover:text-cyan-400 transition">
+                <a href="https://search.google.com/search-console" target="_blank" rel="noreferrer" className="hover:text-cyan-400 transition">
                   Search Console
                 </a>
               </li>
