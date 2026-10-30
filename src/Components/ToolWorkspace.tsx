@@ -75,6 +75,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const [qrText, setQrText] = useState<string>('https://smartpdfstudio.app');
   const [barcodeText, setBarcodeText] = useState<string>('STUDIO-98231');
   const [copiedText, setCopiedText] = useState(false);
+  const [ocrLanguage, setOcrLanguage] = useState('eng');
 
   // Form Tool States (Invoice, Resume, Certificate)
   const [invoiceData, setInvoiceData] = useState({
@@ -223,7 +224,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         setProcessingState({
           status: 'success',
           progress: 100,
-          stageMessage: 'PDF compressed successfully!',
+          stageMessage: 'PDF re-saved with basic object-stream optimization. File size may increase or decrease.',
           resultUrl: url,
           resultFileName: `optimized_${files[0].name}`,
           originalSize: files[0].size,
@@ -375,9 +376,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         if (files.length === 0) throw new Error('Please select a file.');
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Extracting text content...' }));
         const text = tool.id === 'image-ocr'
-          ? await recognizeImageText(files[0])
+          ? await recognizeImageText(files[0], ocrLanguage)
           : tool.id === 'ocr-pdf'
-          ? await recognizePdfText(files[0])
+          ? await recognizePdfText(files[0], ocrLanguage)
           : await extractTextFromPdf(files[0]);
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -439,19 +440,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             resultSize: blob.size,
           });
         } else {
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const url = URL.createObjectURL(blob);
-              setProcessingState({
-                status: 'success',
-                progress: 100,
-                stageMessage: 'QR Code generated!',
-                resultUrl: url,
-                resultFileName: 'qrcode.png',
-                previewUrl: url,
-                resultSize: blob.size,
-              });
-            }
+          const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Could not export the QR image.')), 'image/png');
+          });
+          const url = URL.createObjectURL(blob);
+          setProcessingState({
+            status: 'success', progress: 100, stageMessage: 'QR Code generated!',
+            resultUrl: url, resultFileName: 'qrcode.png', previewUrl: url, resultSize: blob.size,
           });
         }
         return;
@@ -461,19 +456,14 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       if (tool.id === 'barcode-maker') {
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Drawing Code 128 barcode...' }));
         const canvas = await generateBarcodeCanvas(barcodeText);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            setProcessingState({
-              status: 'success',
-              progress: 100,
-              stageMessage: 'Barcode generated successfully!',
-              resultUrl: url,
-              resultFileName: `barcode_${barcodeText}.png`,
-              previewUrl: url,
-              resultSize: blob.size,
-            });
-          }
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Could not export the barcode image.')), 'image/png');
+        });
+        const url = URL.createObjectURL(blob);
+        setProcessingState({
+          status: 'success', progress: 100, stageMessage: 'Barcode generated successfully!',
+          resultUrl: url, resultFileName: 'barcode_' + barcodeText.replace(/[^a-zA-Z0-9_-]/g, '_') + '.png',
+          previewUrl: url, resultSize: blob.size,
         });
         return;
       }
@@ -877,6 +867,17 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
               <span className="w-2 h-2 rounded-full bg-cyan-400" />
               {t.settings}
             </h4>
+
+            {(tool.id === 'ocr-pdf' || tool.id === 'image-ocr') && (
+              <div className="mb-5 max-w-sm">
+                <label className="block text-xs font-semibold text-slate-300 mb-2">OCR language</label>
+                <select value={ocrLanguage} onChange={(e) => setOcrLanguage(e.target.value)} className="w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs sm:text-sm focus:outline-hidden focus:border-cyan-400">
+                  <option value="eng">English</option><option value="hin">Hindi</option><option value="eng+hin">English + Hindi</option>
+                  <option value="deu">German</option><option value="spa">Spanish</option><option value="fra">French</option><option value="por">Portuguese</option><option value="rus">Russian</option><option value="ara">Arabic</option><option value="chi_sim">Chinese (Simplified)</option><option value="jpn">Japanese</option>
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">OCR may download language and engine resources. Your document is processed in the browser.</p>
+              </div>
+            )}
 
             {/* 1. Image Compressor settings */}
             {(tool.id === 'image-compressor' || tool.id === 'compress-image') && (
