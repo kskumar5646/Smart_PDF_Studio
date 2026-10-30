@@ -1079,7 +1079,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             {(tool.id === 'split-pdf' || tool.id === 'extract-pages' || tool.id === 'remove-pages' || tool.id === 'reorder-pages' || tool.id === 'duplicate-pages') && (
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Page Range or Page Numbers to Extract
+                  {tool.id === 'reorder-pages' ? 'Complete page order (include every page once)' : tool.id === 'duplicate-pages' ? 'Pages to duplicate' : tool.id === 'remove-pages' ? 'Pages to remove' : 'Page range or page numbers to extract'}
                 </label>
                 <input
                   type="text"
