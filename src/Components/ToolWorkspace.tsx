@@ -121,10 +121,32 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     rgb: 'rgb(2, 132, 199)',
   });
 
-  // File Input Handler
+  const isAcceptedFile = (file: File): boolean => {
+    const name = file.name.toLowerCase();
+    if (tool.inputType === 'image' || tool.inputType === 'multiple-images') {
+      return file.type.startsWith('image/') || /\\.(jpg|jpeg|png|webp)$/i.test(name);
+    }
+    if (tool.id === 'word-to-pdf') return /\\.(doc|docx)$/i.test(name);
+    if (tool.id === 'excel-to-pdf') return /\\.(xls|xlsx|csv)$/i.test(name);
+    if (tool.id === 'powerpoint-to-pdf') return /\\.(ppt|pptx)$/i.test(name);
+    if (tool.inputType === 'text') return /\\.(txt|html|md)$/i.test(name);
+    return file.type === 'application/pdf' || name.endsWith('.pdf');
+  };
+
+  // File Input Handler: reject mismatched file types before processing.
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selected = Array.from(e.target.files);
+      e.currentTarget.value = '';
+      if (selected.some((file) => !isAcceptedFile(file))) {
+        setProcessingState({
+          status: 'error', progress: 0, stageMessage: '',
+          errorMessage: tool.inputType === 'image' || tool.inputType === 'multiple-images'
+            ? 'This tool accepts image files only (JPG, PNG or WebP).'
+            : 'One or more selected files have the wrong format for this tool.',
+        });
+        return;
+      }
       if (tool.inputType === 'multiple-pdf' || tool.inputType === 'multiple-images') {
         setFiles((prev) => [...prev, ...selected]);
       } else {
@@ -149,6 +171,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const dropped = Array.from(e.dataTransfer.files);
+      if (dropped.some((file) => !isAcceptedFile(file))) {
+        setProcessingState({
+          status: 'error', progress: 0, stageMessage: '',
+          errorMessage: 'One or more dropped files have the wrong format for this tool.',
+        });
+        return;
+      }
       if (tool.inputType === 'multiple-pdf' || tool.inputType === 'multiple-images') {
         setFiles((prev) => [...prev, ...dropped]);
       } else {
