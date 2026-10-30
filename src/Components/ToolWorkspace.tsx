@@ -567,12 +567,12 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         const requested: number[] = [];
         for (const part of splitRange.split(',')) {
           const trimmed = part.trim();
-          const range = trimmed.match(/^(\\d+)\\s*-\\s*(\\d+)$/);
+          const range = trimmed.match(/^(\d+)\s*-\s*(\d+)$/);
           if (range) {
             const first = Number(range[1]), last = Number(range[2]);
             if (first < 1 || last < first || last > pageCount) throw new Error(`Enter a valid page range between 1 and ${pageCount}.`);
             for (let n = first; n <= last; n++) requested.push(n);
-          } else if (/^\\d+$/.test(trimmed)) {
+          } else if (/^\d+$/.test(trimmed)) {
             const n = Number(trimmed);
             if (n < 1 || n > pageCount) throw new Error(`Page numbers must be between 1 and ${pageCount}.`);
             requested.push(n);
