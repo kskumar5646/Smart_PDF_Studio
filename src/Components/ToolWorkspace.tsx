@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { ToolDefinition, ProcessingState } from '../types';
 import { ToolIcon } from '../icons/ToolIcons';
+import { IMPLEMENTED_TOOL_IDS } from '../tools/toolRegistry';
 import { TranslationDictionary } from '../translations';
 import {
   compressImageFile,
@@ -691,12 +692,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   };
 
   // Signature canvas mouse listeners
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = sigCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const rect = canvas.getBoundingClientRect();
+    e.currentTarget.setPointerCapture(e.pointerId);
     ctx.beginPath();
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
     ctx.strokeStyle = '#0284c7';
@@ -706,7 +708,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     setHasDrawnSig(true);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isDrawingSig) return;
     const canvas = sigCanvasRef.current;
     if (!canvas) return;
@@ -1243,11 +1245,12 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   ref={sigCanvasRef}
                   width={400}
                   height={130}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  className="w-full max-w-md h-32 rounded-xl bg-slate-950 border border-slate-700 cursor-crosshair shadow-inner"
+                  onPointerDown={startDrawing}
+                  onPointerMove={draw}
+                  onPointerUp={stopDrawing}
+                  onPointerCancel={stopDrawing}
+                  onPointerLeave={stopDrawing}
+                  className="w-full max-w-md h-32 rounded-xl bg-slate-950 border border-slate-700 cursor-crosshair shadow-inner touch-none"
                 />
               </div>
             )}
