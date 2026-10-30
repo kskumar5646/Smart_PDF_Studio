@@ -379,7 +379,7 @@ export async function recognizePdfText(file: File, language = 'eng'): Promise<st
       canvas.height = Math.ceil(viewport.height);
       const context = canvas.getContext('2d');
       if (!context) throw new Error('Your browser could not create a canvas for OCR.');
-      await page.render({ canvasContext: context, viewport }).promise;
+      await page.render({ canvas, canvasContext: context, viewport }).promise;
       const result = await worker.recognize(canvas);
       pages.push(`--- Page ${pageNumber} ---\n${result.data.text.trim()}`);
       canvas.width = 0;
