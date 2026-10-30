@@ -235,7 +235,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       }
 
       // 4. Split PDF / Split by count
-      if (tool.id === 'split-pdf' || tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages' || tool.id === 'extract-pages' || tool.id === 'remove-pages' || tool.id === 'reorder-pages' || tool.id === 'duplicate-pages') {
+      if (tool.id === 'split-pdf' || tool.id === 'extract-pages' || tool.id === 'remove-pages' || tool.id === 'reorder-pages' || tool.id === 'duplicate-pages') {
         if (files.length === 0) throw new Error('Please select a PDF file.');
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Extracting selected pages...' }));
 
@@ -253,7 +253,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           });
         }
 
-        const validPages = pages.length > 0 ? pages : [1];
+        if (pages.length === 0) throw new Error('Enter a valid page range, such as 1-3 or 1,2,5.');
+        const validPages = pages;
         const splitBytes = await splitPdfFile(files[0], validPages);
         const blob = uint8ArrayToBlob(splitBytes);
         const url = URL.createObjectURL(blob);
@@ -314,7 +315,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       }
 
       // 7. Page Numbers
-      if (tool.id === 'page-numbers' || tool.id === 'header-footer') {
+      if (tool.id === 'page-numbers') {
         if (files.length === 0) throw new Error('Please select a PDF file.');
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Adding pagination markers...' }));
         const numberedBytes = await addPageNumbersToPdf(files[0], pageNumberPosition);
@@ -620,6 +621,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       // Do not silently re-save an unchanged PDF for tools that have no
       // implementation. A visible error is safer than a false success.
       const unavailable: Record<string, string> = {
+        'pdf-split-by-count': 'Split by fixed page count is not implemented yet.',
+        'split-every-n-pages': 'Splitting at fixed N-page intervals is not implemented yet.',
+        'header-footer': 'Custom headers and footers are not implemented yet; use Page Numbers for pagination.',
         'pdf-to-excel': 'PDF to Excel conversion is not implemented yet.',
         'word-to-pdf': 'Word to PDF conversion requires a DOCX rendering engine and is not implemented yet.',
         'excel-to-pdf': 'Excel to PDF conversion requires a spreadsheet rendering engine and is not implemented yet.',
@@ -993,7 +997,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             )}
 
             {/* 4. Page Numbers settings */}
-            {(tool.id === 'page-numbers' || tool.id === 'header-footer') && (
+            {tool.id === 'page-numbers' && (
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-2">
                   Number Placement
