@@ -13,6 +13,8 @@ import {
   imagesToPdf,
   cropPdfFile,
   extractTextFromPdf,
+  recognizeImageText,
+  recognizePdfText,
   pdfToWordDocx,
   generateQrCodeCanvas,
   generateBarcodeCanvas,
@@ -372,7 +374,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       if (tool.id === 'pdf-to-text' || tool.id === 'ocr-pdf' || tool.id === 'image-ocr') {
         if (files.length === 0) throw new Error('Please select a file.');
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Extracting text content...' }));
-        const text = await extractTextFromPdf(files[0]);
+        const text = tool.id === 'image-ocr'
+          ? await recognizeImageText(files[0])
+          : tool.id === 'ocr-pdf'
+          ? await recognizePdfText(files[0])
+          : await extractTextFromPdf(files[0]);
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
 
@@ -410,7 +416,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       // 12. QR Code Maker
       if (tool.id === 'qr-code-maker' || tool.id === 'qr-code-to-pdf') {
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Generating QR matrix...' }));
-        const canvas = generateQrCodeCanvas(qrText, 400);
+        const canvas = await generateQrCodeCanvas(qrText, 400);
 
         if (tool.id === 'qr-code-to-pdf') {
           const doc = new jsPDF();
@@ -454,7 +460,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       // 13. Barcode Maker
       if (tool.id === 'barcode-maker') {
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Drawing Code 128 barcode...' }));
-        const canvas = generateBarcodeCanvas(barcodeText);
+        const canvas = await generateBarcodeCanvas(barcodeText);
         canvas.toBlob((blob) => {
           if (blob) {
             const url = URL.createObjectURL(blob);
@@ -523,30 +529,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         return;
       }
 
-      // 17. Protect PDF / Encrypt
+      // The current browser-side pdf-lib engine cannot apply standard PDF
+      // password encryption. Never produce an unencrypted file and call it protected.
       if (tool.id === 'protect-pdf' || tool.id === 'encrypt-pdf') {
-        if (files.length === 0) throw new Error('Please select a PDF file.');
-        if (!protectPassword) throw new Error('Please enter a password.');
-        if (protectPassword !== confirmPassword) throw new Error('Passwords do not match.');
-
-        setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Preparing a protected PDF copy...' }));
-        const pdfBytes = await files[0].arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes);
-        // Save PDF with updated metadata and secured streams
-        pdfDoc.setTitle(`Protected - ${files[0].name}`);
-        const saved = await pdfDoc.save();
-        const blob = uint8ArrayToBlob(saved);
-        const url = URL.createObjectURL(blob);
-
-        setProcessingState({
-          status: 'success',
-          progress: 100,
-          stageMessage: 'Protected PDF copy created. This browser build does not add a PDF password encryption layer.',
-          resultUrl: url,
-          resultFileName: `protected_${files[0].name}`,
-          resultSize: blob.size,
-        });
-        return;
+        throw new Error('Real PDF password encryption is not available in this browser build yet. No protected file was created. This tool is disabled rather than giving a false security guarantee.');
       }
 
       // 18. Sign PDF (Interactive Signature)
@@ -610,31 +596,61 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         return;
       }
 
-      // Fallback for remaining browser tools (e.g. Extract, Remove, Duplicate, Flatten, Info, etc.)
-      if (files.length > 0) {
-        setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Processing document...' }));
-        const pdfBytes = await files[0].arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-
-        if (tool.id === 'flatten-pdf') {
-          pdfDoc.getForm().flatten();
-        }
-
-        const saved = await pdfDoc.save();
-        const blob = uint8ArrayToBlob(saved);
-        const url = URL.createObjectURL(blob);
-
-        setProcessingState({
-          status: 'success',
-          progress: 100,
-          stageMessage: 'Operation completed successfully!',
-          resultUrl: url,
-          resultFileName: `processed_${files[0].name}`,
-          originalSize: files[0].size,
-          resultSize: blob.size,
-        });
-        return;
-      }
+      // Do not silently re-save an unchanged PDF for tools that have no
+      // implementation. A visible error is safer than a false success.
+      const unavailable: Record<string, string> = {
+        'pdf-to-excel': 'PDF to Excel conversion is not implemented yet.',
+        'word-to-pdf': 'Word to PDF conversion requires a DOCX rendering engine and is not implemented yet.',
+        'excel-to-pdf': 'Excel to PDF conversion requires a spreadsheet rendering engine and is not implemented yet.',
+        'powerpoint-to-pdf': 'PowerPoint to PDF conversion requires a slide rendering engine and is not implemented yet.',
+        'pdf-to-powerpoint': 'PDF to PowerPoint conversion is not implemented yet.',
+        'pdf-to-jpg': 'PDF page image rendering is not implemented yet.',
+        'pdf-to-png': 'PDF page image rendering is not implemented yet.',
+        'pdf-to-pdfa': 'Validated PDF/A archival conversion is not implemented yet.',
+        'unlock-pdf': 'PDF decryption is not implemented yet. Use a trusted PDF application and the document password.',
+        'redact-pdf': 'Permanent secure redaction is not implemented yet. Drawing a black box is not safe redaction.',
+        'pdf-annotation': 'PDF annotation editing is not implemented yet.',
+        'compare-pdfs': 'A true visual and text comparison engine is not implemented yet.',
+        'scan-to-pdf': 'Camera capture workflow is not implemented yet.',
+        'text-to-pdf': 'Text-to-PDF workflow is not implemented yet.',
+        'html-to-pdf': 'HTML-to-PDF rendering is not implemented yet.',
+        'resize-pdf': 'PDF page resizing is not implemented yet.',
+        'pdf-metadata': 'PDF metadata inspection and editing are not implemented yet.',
+        'pdf-info': 'PDF information inspection is not implemented yet.',
+        'search-pdf': 'Searchable PDF text indexing is not implemented yet.',
+        'pdf-page-preview': 'PDF page thumbnail preview is not implemented yet.',
+        'extract-pages': 'Page extraction is not implemented yet.',
+        'remove-pages': 'Page removal is not implemented yet.',
+        'reorder-pages': 'Page reordering is not implemented yet.',
+        'duplicate-pages': 'Page duplication is not implemented yet.',
+        'organize-pdf': 'Visual page organizer is not implemented yet.',
+        'resize-image': 'Custom image resizing is not implemented yet.',
+        'convert-image': 'Image conversion is not implemented yet.',
+        'crop-image': 'Image cropping is not implemented yet.',
+        'sign-image': 'Image signature placement is not implemented yet.',
+        'color-picker': 'Image color sampling is not implemented yet.',
+        'letter-to-pdf': 'Letter builder is not implemented yet.',
+        'poster-to-pdf': 'Poster builder is not implemented yet.',
+        'convert-to-pdf': 'This is a category, not a processing tool.',
+        'convert-from-pdf': 'This is a category, not a processing tool.',
+        'organize-pdf': 'This tool ID is duplicated and cannot be processed reliably.',
+        'edit-pdf': 'This is a category, not a processing tool.',
+        'security': 'This is a category, not a processing tool.',
+        'image-tools': 'This is a category, not a processing tool.',
+        'utilities': 'This is a category, not a processing tool.',
+        'more-tools': 'This is a category, not a processing tool.',
+      };
+      throw new Error(unavailable[tool.id] || `${tool.name} is not implemented yet. No output file was created.`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred during processing.';
+      setProcessingState({
+        status: 'error',
+        progress: 0,
+        stageMessage: '',
+        errorMessage: message,
+      });
+    }
+  };
 
       throw new Error('Please provide an input file or configure settings.');
     } catch (err: unknown) {
@@ -772,6 +788,12 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   accept={
                     tool.inputType === 'image' || tool.inputType === 'multiple-images'
                       ? 'image/jpeg,image/png,image/webp'
+                      : tool.id === 'word-to-pdf'
+                      ? '.doc,.docx'
+                      : tool.id === 'excel-to-pdf'
+                      ? '.xls,.xlsx,.csv'
+                      : tool.id === 'powerpoint-to-pdf'
+                      ? '.ppt,.pptx'
                       : tool.inputType === 'text'
                       ? '.txt,.html,.md'
                       : '.pdf'
