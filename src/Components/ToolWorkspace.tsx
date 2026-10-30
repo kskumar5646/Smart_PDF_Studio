@@ -170,7 +170,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 
     try {
       // 1. Image Compressor / Compress Image
-      if (tool.id === 'image-compressor' || tool.id === 'compress-image' || tool.id === 'resize-image' || tool.id === 'convert-image' || tool.id === 'crop-image') {
+      if (tool.id === 'image-compressor' || tool.id === 'compress-image') {
         if (files.length === 0) throw new Error('Please select an image file first.');
         const originalFile = files[0];
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Compressing image via HTML5 Canvas...' }));
@@ -535,62 +535,92 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         throw new Error('Real PDF password encryption is not available in this browser build yet. No protected file was created. This tool is disabled rather than giving a false security guarantee.');
       }
 
-      // 18. Sign PDF (Interactive Signature)
-      if (tool.id === 'sign-pdf' || tool.id === 'sign-image') {
-        if (files.length === 0) throw new Error('Please select a file to sign.');
-        setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Applying a visible signature mark...' }));
-
-        const pdfBytes = await files[0].arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-        const pages = pdfDoc.getPages();
-        const firstPage = pages[0];
-
-        // Draw a visible signature mark at the bottom of the first PDF page
-        firstPage.drawRectangle({
-          x: 40,
-          y: 40,
-          width: 220,
-          height: 60,
-          borderColor: rgb(0.01, 0.52, 0.78),
-          borderWidth: 1.5,
-          color: rgb(0.96, 0.98, 1),
+      // 18. Visible electronic signature mark (not a cryptographic certificate).
+      if (tool.id === 'sign-pdf') {
+        if (files.length === 0) throw new Error('Please select a PDF file to sign.');
+        if (!sigCanvasRef.current || !hasDrawnSig) throw new Error('Please draw your signature in the signature box first.');
+        setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Placing your visible signature on the first page...' }));
+        const pdfDoc = await PDFDocument.load(await files[0].arrayBuffer());
+        const pngBytes = await fetch(sigCanvasRef.current.toDataURL('image/png')).then((response) => response.arrayBuffer());
+        const signature = await pdfDoc.embedPng(pngBytes);
+        const page = pdfDoc.getPages()[0];
+        const pageWidth = page.getWidth();
+        const pageHeight = page.getHeight();
+        const targetWidth = Math.min(180, pageWidth * 0.35);
+        const targetHeight = targetWidth * (signature.height / signature.width);
+        page.drawImage(signature, {
+          x: Math.max(24, pageWidth - targetWidth - 36),
+          y: 36,
+          width: targetWidth,
+          height: Math.min(targetHeight, pageHeight * 0.18),
         });
-
-        const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-        firstPage.drawText('Digitally Signed with Smart PDF Studio', {
-          x: 48,
-          y: 80,
-          size: 9,
-          font,
-          color: rgb(0.01, 0.52, 0.78),
-        });
-
-        firstPage.drawText(`Date: ${new Date().toLocaleDateString()}`, {
-          x: 48,
-          y: 65,
-          size: 8,
-          font,
-          color: rgb(0.3, 0.35, 0.4),
-        });
-
-        firstPage.drawText('Verified Client-Side Signature', {
-          x: 48,
-          y: 50,
-          size: 8,
-          font,
-          color: rgb(0.1, 0.7, 0.3),
-        });
-
-        const saved = await pdfDoc.save();
-        const blob = uint8ArrayToBlob(saved);
+        const blob = uint8ArrayToBlob(await pdfDoc.save());
         const url = URL.createObjectURL(blob);
-
         setProcessingState({
           status: 'success',
           progress: 100,
-          stageMessage: 'Visible signature mark applied successfully!',
+          stageMessage: 'Visible signature image added. This is not a certificate-based digital signature.',
           resultUrl: url,
           resultFileName: `signed_${files[0].name}`,
+          originalSize: files[0].size,
+          resultSize: blob.size,
+        });
+        return;
+      }
+
+      // Page-level operations use 1-based page numbers entered as "1-3" or "1,3,5".
+      if (['extract-pages', 'remove-pages', 'reorder-pages', 'duplicate-pages'].includes(tool.id)) {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        const pdfDoc = await PDFDocument.load(await files[0].arrayBuffer());
+        const pageCount = pdfDoc.getPageCount();
+        const requested: number[] = [];
+        for (const part of splitRange.split(',')) {
+          const trimmed = part.trim();
+          const range = trimmed.match(/^(\\d+)\\s*-\\s*(\\d+)$/);
+          if (range) {
+            const first = Number(range[1]), last = Number(range[2]);
+            if (first < 1 || last < first || last > pageCount) throw new Error(`Enter a valid page range between 1 and ${pageCount}.`);
+            for (let n = first; n <= last; n++) requested.push(n);
+          } else if (/^\\d+$/.test(trimmed)) {
+            const n = Number(trimmed);
+            if (n < 1 || n > pageCount) throw new Error(`Page numbers must be between 1 and ${pageCount}.`);
+            requested.push(n);
+          } else {
+            throw new Error('Use page numbers like 1,3,5 or a range like 2-6.');
+          }
+        }
+        if (!requested.length) throw new Error('Enter at least one page number.');
+        let output: PDFDocument;
+        if (tool.id === 'remove-pages') {
+          const remove = new Set(requested);
+          if (remove.size >= pageCount) throw new Error('You cannot remove every page from a PDF.');
+          for (const n of [...remove].sort((a, b) => b - a)) pdfDoc.removePage(n - 1);
+          output = pdfDoc;
+        } else {
+          output = await PDFDocument.create();
+          const pageNumbers = tool.id === 'reorder-pages'
+            ? requested
+            : tool.id === 'duplicate-pages'
+            ? requested
+            : [...new Set(requested)];
+          const copied = await output.copyPages(pdfDoc, pageNumbers.map((n) => n - 1));
+          copied.forEach((page) => output.addPage(page));
+        }
+        const blob = uint8ArrayToBlob(await output.save());
+        const url = URL.createObjectURL(blob);
+        const prefixes: Record<string, string> = {
+          'extract-pages': 'extracted',
+          'remove-pages': 'pages_removed',
+          'reorder-pages': 'reordered',
+          'duplicate-pages': 'duplicated',
+        };
+        setProcessingState({
+          status: 'success',
+          progress: 100,
+          stageMessage: `PDF pages processed successfully (${requested.join(', ')}).`,
+          resultUrl: url,
+          resultFileName: `${prefixes[tool.id]}_${files[0].name}`,
+          originalSize: files[0].size,
           resultSize: blob.size,
         });
         return;
@@ -619,15 +649,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         'pdf-info': 'PDF information inspection is not implemented yet.',
         'search-pdf': 'Searchable PDF text indexing is not implemented yet.',
         'pdf-page-preview': 'PDF page thumbnail preview is not implemented yet.',
-        'extract-pages': 'Page extraction is not implemented yet.',
-        'remove-pages': 'Page removal is not implemented yet.',
-        'reorder-pages': 'Page reordering is not implemented yet.',
-        'duplicate-pages': 'Page duplication is not implemented yet.',
         'organize-pdf': 'Visual page organizer is not implemented yet.',
         'resize-image': 'Custom image resizing is not implemented yet.',
         'convert-image': 'Image conversion is not implemented yet.',
         'crop-image': 'Image cropping is not implemented yet.',
-        'sign-image': 'Image signature placement is not implemented yet.',
         'color-picker': 'Image color sampling is not implemented yet.',
         'letter-to-pdf': 'Letter builder is not implemented yet.',
         'poster-to-pdf': 'Poster builder is not implemented yet.',
@@ -712,6 +737,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawnSig(false);
     setHasDrawnSig(false);
   };
 
