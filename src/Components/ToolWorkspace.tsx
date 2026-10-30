@@ -653,7 +653,6 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         'poster-to-pdf': 'Poster builder is not implemented yet.',
         'convert-to-pdf': 'This is a category, not a processing tool.',
         'convert-from-pdf': 'This is a category, not a processing tool.',
-        'organize-pdf': 'This tool ID is duplicated and cannot be processed reliably.',
         'edit-pdf': 'This is a category, not a processing tool.',
         'security': 'This is a category, not a processing tool.',
         'image-tools': 'This is a category, not a processing tool.',
