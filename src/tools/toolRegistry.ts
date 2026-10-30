@@ -63,7 +63,7 @@ export const TOOLS: ToolDefinition[] = [
     id: 'split-pdf',
     name: 'Split PDF',
     category: 'Organize',
-    description: 'Extract individual pages or separate page ranges into separate PDF documents.',
+    description: 'Extract selected pages or page ranges into one new PDF document.',
     shortDescription: 'Separate PDF into multiple files.',
     iconName: 'split-pdf',
     inputType: 'pdf',
