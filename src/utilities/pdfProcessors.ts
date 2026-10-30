@@ -295,7 +295,7 @@ export async function cropPdfFile(
 // 10. Extract Text from PDF (Pure browser reader)
 // Extract selectable PDF text with PDF.js (handles compressed/content streams).
 async function loadPdfJs() {
-  const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
+  const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url
