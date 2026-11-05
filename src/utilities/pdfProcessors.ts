@@ -686,3 +686,88 @@ export function generateCertificatePdf(data: {
 
   return doc.output('blob');
 }
+
+
+// Split a PDF into sequential chunks of N pages.
+export async function splitPdfEveryNPages(file: File, pagesPerFile: number): Promise<Blob[]> {
+  if (!Number.isInteger(pagesPerFile) || pagesPerFile < 1) throw new Error('Pages per file must be a positive whole number.');
+  const source = await PDFDocument.load(await file.arrayBuffer());
+  const outputs: Blob[] = [];
+  for (let start = 0; start < source.getPageCount(); start += pagesPerFile) {
+    const indices = Array.from({ length: Math.min(pagesPerFile, source.getPageCount() - start) }, (_, i) => start + i);
+    const part = await PDFDocument.create();
+    const pages = await part.copyPages(source, indices);
+    pages.forEach(page => part.addPage(page));
+    outputs.push(uint8ArrayToBlob(await part.save()));
+  }
+  return outputs;
+}
+
+// Render every PDF page to a real PNG/JPEG image in the browser.
+export async function renderPdfPages(file: File, format: 'png' | 'jpg' = 'png', scale = 1.8): Promise<Blob[]> {
+  const pdfjs = await loadPdfJs();
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const doc = await task.promise;
+  const images: Blob[] = [];
+  try {
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas is unavailable for PDF rendering.');
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(
+        value => value ? resolve(value) : reject(new Error('Could not encode rendered PDF page.')),
+        format === 'jpg' ? 'image/jpeg' : 'image/png', 0.92
+      ));
+      images.push(blob);
+      canvas.width = 0; canvas.height = 0;
+      page.cleanup();
+    }
+  } finally { await task.destroy(); }
+  return images;
+}
+
+export async function getPdfInformation(file: File): Promise<Record<string, string | number>> {
+  const pdfjs = await loadPdfJs();
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const doc = await task.promise;
+  try {
+    const metadata = await doc.getMetadata();
+    const firstPage = await doc.getPage(1);
+    const viewport = firstPage.getViewport({ scale: 1 });
+    const info = (metadata.info || {}) as Record<string, unknown>;
+    return {
+      fileName: file.name, fileSize: formatBytes(file.size), pages: doc.numPages,
+      pageWidthPoints: Math.round(viewport.width), pageHeightPoints: Math.round(viewport.height),
+      title: String(info.Title || ''), author: String(info.Author || ''),
+      creator: String(info.Creator || ''), producer: String(info.Producer || ''),
+      pdfVersion: String(info.PDFFormatVersion || 'Unknown'),
+    };
+  } finally { await task.destroy(); }
+}
+
+export async function searchPdfText(file: File, query: string): Promise<string> {
+  if (!query.trim()) throw new Error('Enter a word or phrase to search for.');
+  const pdfjs = await loadPdfJs();
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const doc = await task.promise;
+  const matches: string[] = [];
+  try {
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const content = await page.getTextContent();
+      const text = content.items.map((item: any) => typeof item.str === 'string' ? item.str : '').join(' ');
+      const lower = text.toLocaleLowerCase();
+      const needle = query.toLocaleLowerCase();
+      let from = 0, count = 0;
+      while ((from = lower.indexOf(needle, from)) !== -1) { count++; from += needle.length; }
+      if (count) matches.push(`Page ${n}: ${count} match(es)\n${text}`);
+      page.cleanup();
+    }
+  } finally { await task.destroy(); }
+  return matches.length ? matches.join('\n\n') : `No matches for "${query}" were found in selectable PDF text.`;
+}
