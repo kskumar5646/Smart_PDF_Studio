@@ -28,6 +28,7 @@ import {
   splitPdfEveryNPages,
   getPdfInformation,
   searchPdfText,
+  transformImageFile,
 } from '../utilities/pdfProcessors';
 import {
   ArrowLeft,
@@ -83,6 +84,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const [ocrLanguage, setOcrLanguage] = useState('eng');
   const [pagesPerPart, setPagesPerPart] = useState(5);
   const [searchQuery, setSearchQuery] = useState('');
+  const [imageWidth, setImageWidth] = useState(1200);
+  const [imageHeight, setImageHeight] = useState(1200);
 
   // Form Tool States (Invoice, Resume, Certificate)
   const [invoiceData, setInvoiceData] = useState({
@@ -203,6 +206,19 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     });
 
     try {
+      // Dedicated image resize, crop and format conversion tools.
+      if (['resize-image', 'crop-image', 'convert-image'].includes(tool.id)) {
+        if (!files.length) throw new Error('Please select an image file first.');
+        const file = files[0];
+        const mode = tool.id === 'resize-image' ? 'resize' : tool.id === 'crop-image' ? 'crop' : 'convert';
+        setProcessingState(prev => ({ ...prev, progress: 55, stageMessage: mode === 'resize' ? 'Resizing image…' : mode === 'crop' ? 'Cropping image from the centre…' : 'Converting image format…' }));
+        const blob = await transformImageFile(file, mode, imageWidth, imageHeight, imageFormat, quality);
+        const ext = imageFormat === 'image/jpeg' ? 'jpg' : imageFormat.split('/')[1];
+        const url = URL.createObjectURL(blob);
+        setProcessingState({ status: 'success', progress: 100, stageMessage: mode === 'resize' ? 'Image resized successfully.' : mode === 'crop' ? 'Centre crop created successfully.' : 'Image converted successfully.', resultUrl: url, resultFileName: `${mode}_${file.name.replace(/\\.[^/.]+$/, '')}.${ext}`, originalSize: file.size, resultSize: blob.size, previewUrl: url });
+        return;
+      }
+
       // 1. Image Compressor / Compress Image
       if (tool.id === 'image-compressor' || tool.id === 'compress-image') {
         if (files.length === 0) throw new Error('Please select an image file first.');
@@ -744,9 +760,6 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         'search-pdf': 'Searchable PDF text indexing is not implemented yet.',
         'pdf-page-preview': 'PDF page thumbnail preview is not implemented yet.',
         'organize-pdf': 'Visual page organizer is not implemented yet.',
-        'resize-image': 'Custom image resizing is not implemented yet.',
-        'convert-image': 'Image conversion is not implemented yet.',
-        'crop-image': 'Image cropping is not implemented yet.',
         'color-picker': 'Image color sampling is not implemented yet.',
         'letter-to-pdf': 'Letter builder is not implemented yet.',
         'poster-to-pdf': 'Poster builder is not implemented yet.',
@@ -1009,6 +1022,28 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   <option value="deu">German</option><option value="spa">Spanish</option><option value="fra">French</option><option value="por">Portuguese</option><option value="rus">Russian</option><option value="ara">Arabic</option><option value="chi_sim">Chinese (Simplified)</option><option value="jpn">Japanese</option>
                 </select>
                 <p className="text-[11px] text-slate-500 mt-1">OCR may download language and engine resources. Your document is processed in the browser.</p>
+              </div>
+            )}
+
+            {(tool.id === 'resize-image' || tool.id === 'crop-image' || tool.id === 'convert-image') && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {tool.id !== 'convert-image' && <>
+                  <label className="text-xs text-slate-300">{tool.id === 'crop-image' ? 'Crop width (px)' : 'Output width (px)'}
+                    <input type="number" min="1" max="12000" value={imageWidth} onChange={e => setImageWidth(Math.max(1, Math.min(12000, Number(e.target.value) || 1)))} className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white" />
+                  </label>
+                  <label className="text-xs text-slate-300">{tool.id === 'crop-image' ? 'Crop height (px)' : 'Output height (px)'}
+                    <input type="number" min="1" max="12000" value={imageHeight} onChange={e => setImageHeight(Math.max(1, Math.min(12000, Number(e.target.value) || 1)))} className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white" />
+                  </label>
+                </>}
+                <label className="text-xs text-slate-300">Output format
+                  <select value={imageFormat} onChange={e => setImageFormat(e.target.value as 'image/jpeg' | 'image/png' | 'image/webp')} className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                    <option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option>
+                  </select>
+                </label>
+                <label className="text-xs text-slate-300">Quality: {Math.round(quality * 100)}%
+                  <input type="range" min="0.1" max="1" step="0.05" value={quality} onChange={e => setQuality(Number(e.target.value))} className="mt-3 w-full accent-cyan-500" />
+                </label>
+                {tool.id === 'crop-image' && <p className="sm:col-span-2 text-[11px] text-slate-500">Crop is centred automatically. Enter the required crop dimensions; the output is clipped to the image bounds.</p>}
               </div>
             )}
 
