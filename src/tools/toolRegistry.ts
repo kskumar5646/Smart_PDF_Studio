@@ -526,7 +526,7 @@ export const TOOLS: ToolDefinition[] = [
     id: 'qr-code-maker',
     name: 'QR Code Maker',
     category: 'Utilities',
-    description: 'Generate a browser-side QR-style image for text and URLs.',
+    description: 'Generate standards-compliant QR codes for text and URLs in your browser.',
     shortDescription: 'Create custom QR codes.',
     iconName: 'qr-code-maker',
     inputType: 'text',
@@ -537,7 +537,7 @@ export const TOOLS: ToolDefinition[] = [
     id: 'barcode-maker',
     name: 'Barcode Maker',
     category: 'Utilities',
-    description: 'Generate a browser-side barcode-style image from text.',
+    description: 'Generate standards-compliant Code 128 barcodes from text in your browser.',
     shortDescription: 'Create standard barcodes.',
     iconName: 'barcode-maker',
     inputType: 'text',
@@ -695,7 +695,13 @@ export const IMPLEMENTED_TOOL_IDS = [
   "extract-pages",
   "remove-pages",
   "reorder-pages",
-  "duplicate-pages"
+  "duplicate-pages",
+  "pdf-to-jpg",
+  "pdf-to-png",
+  "pdf-info",
+  "search-pdf",
+  "pdf-split-by-count",
+  "split-every-n-pages"
 ] as const;
 
 export const POPULAR_TOOL_IDS = ['image-compressor', 'pdf-to-word', 'merge-pdf', 'jpg-to-pdf'];
