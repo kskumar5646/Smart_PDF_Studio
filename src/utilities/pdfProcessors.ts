@@ -1,5 +1,6 @@
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import jsPDF from 'jspdf';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 // Helper: Download a Blob with filename
 export function downloadBlob(blob: Blob, filename: string) {
@@ -135,6 +136,84 @@ export async function splitPdfFile(
   return await splitDoc.save();
 }
 
+/**
+ * Apply page-level PDF operations using 1-based page numbers.
+ * pageExpression accepts values such as "1,3,5" or "2-4".
+ */
+export async function organizePdfPages(
+  file: File,
+  operation: 'extract' | 'remove' | 'reorder' | 'duplicate',
+  pageExpression: string
+): Promise<{ bytes: Uint8Array; sourcePageCount: number; outputPageCount: number; selectedPages: number[] }> {
+  const source = await PDFDocument.load(await file.arrayBuffer());
+  const sourcePageCount = source.getPageCount();
+  if (sourcePageCount < 1) throw new Error('The selected PDF contains no pages.');
+
+  const expression = pageExpression.trim();
+  if (!expression) throw new Error('Enter at least one page number.');
+  const parsed: number[] = [];
+  for (const token of expression.split(',')) {
+    const value = token.trim();
+    const range = value.match(/^(\\d+)\\s*-\\s*(\\d+)$/);
+    if (range) {
+      const first = Number(range[1]);
+      const last = Number(range[2]);
+      if (first < 1 || last < first || last > sourcePageCount) {
+        throw new Error(`Enter a valid page range between 1 and ${sourcePageCount}.`);
+      }
+      for (let page = first; page <= last; page++) parsed.push(page);
+    } else if (/^\\d+$/.test(value)) {
+      const page = Number(value);
+      if (page < 1 || page > sourcePageCount) {
+        throw new Error(`Page numbers must be between 1 and ${sourcePageCount}.`);
+      }
+      parsed.push(page);
+    } else {
+      throw new Error('Use page numbers like 1,3,5 or a range like 2-6. Do not leave empty entries.');
+    }
+  }
+
+  const selectedPages = [...new Set(parsed)];
+  if (operation === 'reorder') {
+    if (parsed.length !== sourcePageCount || selectedPages.length !== sourcePageCount) {
+      throw new Error(`To reorder pages, enter every page exactly once, for example 3,1,2 for a ${sourcePageCount}-page PDF.`);
+    }
+  } else if (parsed.length !== selectedPages.length) {
+    throw new Error('A page may be selected only once. Remove duplicate page numbers from your input.');
+  }
+
+  let output: PDFDocument;
+  if (operation === 'remove') {
+    if (selectedPages.length >= sourcePageCount) {
+      throw new Error('You cannot remove every page from a PDF.');
+    }
+    for (const page of [...selectedPages].sort((a, b) => b - a)) {
+      source.removePage(page - 1);
+    }
+    output = source;
+  } else {
+    output = await PDFDocument.create();
+    const pageOrder = operation === 'duplicate'
+      ? Array.from({ length: sourcePageCount }, (_, index) => {
+          const page = index + 1;
+          return selectedPages.includes(page) ? [page, page] : [page];
+        }).flat()
+      : operation === 'reorder'
+        ? parsed
+        : selectedPages;
+    const copiedPages = await output.copyPages(source, pageOrder.map(page => page - 1));
+    copiedPages.forEach(page => output.addPage(page));
+  }
+
+  const bytes = await output.save();
+  return {
+    bytes,
+    sourcePageCount,
+    outputPageCount: output.getPageCount(),
+    selectedPages,
+  };
+}
+
 // 5. Rotate PDF Pages
 export async function rotatePdfPages(
   file: File,
@@ -250,11 +329,16 @@ export async function imagesToPdf(files: File[]): Promise<Uint8Array> {
     const bytes = await file.arrayBuffer();
     let embeddedImg;
 
-    if (file.type.includes('png')) {
+    if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
       embeddedImg = await pdfDoc.embedPng(bytes);
-    } else {
-      // Default to jpg embed
+    } else if (file.type === 'image/jpeg' || file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg')) {
       embeddedImg = await pdfDoc.embedJpg(bytes);
+    } else if (file.type === 'image/webp' || file.name.toLowerCase().endsWith('.webp')) {
+      // pdf-lib does not embed WebP directly; convert it locally to JPEG first.
+      const converted = await compressImageFile(file, 0.95, 'image/jpeg');
+      embeddedImg = await pdfDoc.embedJpg(await converted.blob.arrayBuffer());
+    } else {
+      throw new Error(`Unsupported image format: ${file.name}. Use JPG, PNG or WebP.`);
     }
 
     const { width, height } = embeddedImg;
@@ -292,194 +376,167 @@ export async function cropPdfFile(
 }
 
 // 10. Extract Text from PDF (Pure browser reader)
-export async function extractTextFromPdf(file: File): Promise<string> {
-  const buffer = await file.arrayBuffer();
-  const decoder = new TextDecoder('utf-8', { fatal: false });
-  const text = decoder.decode(buffer);
-
-  // Extract stream blocks or parenthesis text strings
-  const matches: string[] = [];
-  const regex = /\(([^()]{2,})\)\s*T[jJ]/g;
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    if (match[1] && match[1].trim().length > 0) {
-      // Decode octal escapes if any
-      const cleaned = match[1]
-        .replace(/\\([0-7]{3})/g, (_, oct) => String.fromCharCode(parseInt(oct, 8)))
-        .replace(/\\([()\\])/g, '$1');
-      matches.push(cleaned);
-    }
-  }
-
-  if (matches.length > 0) {
-    return matches.join(' ');
-  }
-
-  // Fallback extraction
-  const simpleStrings: string[] = [];
-  const simpleRegex = />>stream[\r\n]+([\s\S]*?)[\r\n]+endstream/g;
-  let streamMatch;
-  while ((streamMatch = simpleRegex.exec(text)) !== null) {
-    const streamContent = streamMatch[1];
-    const words = streamContent.match(/[A-Za-z0-9,.:;?!'"]{3,}/g);
-    if (words) {
-      simpleStrings.push(words.join(' '));
-    }
-  }
-
-  if (simpleStrings.length > 0) {
-    return simpleStrings.slice(0, 50).join('\n\n');
-  }
-
-  return 'Document text extracted successfully. (No raw uncompressed text streams detected in this specific PDF structure).';
+// Extract selectable PDF text with PDF.js (handles compressed/content streams).
+async function loadPdfJs() {
+  const pdfjs = await import('pdfjs-dist');
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
+  return pdfjs;
 }
 
-// 11. PDF to Editable Word (.docx compatible file)
+export async function extractTextFromPdf(file: File): Promise<string> {
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    throw new Error('Please select a valid PDF file.');
+  }
+  const pdfjs = await loadPdfJs();
+  const data = new Uint8Array(await file.arrayBuffer());
+  const loadingTask = pdfjs.getDocument({ data });
+  const document = await loadingTask.promise;
+  const pages: string[] = [];
+
+  try {
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
+      const page = await document.getPage(pageNumber);
+      const content = await page.getTextContent();
+      const items = content.items
+        .filter((item: any) => typeof item.str === 'string' && item.str.trim())
+        .map((item: any) => ({ text: item.str, y: Math.round(item.transform?.[5] ?? 0) }))
+        .sort((a: { y: number }, b: { y: number }) => b.y - a.y);
+      const lines: string[] = [];
+      let currentY: number | null = null;
+      let currentLine: string[] = [];
+      for (const item of items) {
+        if (currentY !== null && Math.abs(item.y - currentY) > 3) {
+          lines.push(currentLine.join(' ').trim());
+          currentLine = [];
+        }
+        currentY = item.y;
+        currentLine.push(item.text);
+      }
+      if (currentLine.length) lines.push(currentLine.join(' ').trim());
+      pages.push(lines.filter(Boolean).join('\n'));
+      page.cleanup();
+    }
+  } finally {
+    await loadingTask.destroy();
+  }
+
+  const extracted = pages.map((page, index) => `--- Page ${index + 1} ---\n${page}`).join('\n\n');
+  if (!extracted.replace(/--- Page \d+ ---/g, '').trim()) {
+    throw new Error('No selectable text was found. This may be a scanned PDF; use OCR PDF to recognize image-based text.');
+  }
+  return extracted;
+}
+
+export async function recognizeImageText(file: File, language = 'eng'): Promise<string> {
+  if (!file.type.startsWith('image/')) throw new Error('Please select an image file.');
+  const { createWorker } = await import('tesseract.js');
+  const worker = await createWorker(language);
+  try {
+    const result = await worker.recognize(file);
+    const text = result.data.text.trim();
+    if (!text) throw new Error('No readable text was detected in this image.');
+    return text;
+  } finally {
+    await worker.terminate();
+  }
+}
+
+export async function recognizePdfText(file: File, language = 'eng'): Promise<string> {
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    throw new Error('Please select a valid PDF file.');
+  }
+  const pdfjs = await loadPdfJs();
+  const data = new Uint8Array(await file.arrayBuffer());
+  const loadingTask = pdfjs.getDocument({ data });
+  const pdfDocument = await loadingTask.promise;
+  const { createWorker } = await import('tesseract.js');
+  const worker = await createWorker(language);
+  const pages: string[] = [];
+  try {
+    for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
+      const page = await pdfDocument.getPage(pageNumber);
+      const viewport = page.getViewport({ scale: 1.6 });
+      const canvas = window.document.createElement('canvas');
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Your browser could not create a canvas for OCR.');
+      await page.render({ canvas, canvasContext: context, viewport }).promise;
+      const result = await worker.recognize(canvas);
+      pages.push(`--- Page ${pageNumber} ---\n${result.data.text.trim()}`);
+      canvas.width = 0;
+      canvas.height = 0;
+      page.cleanup();
+    }
+  } finally {
+    await worker.terminate();
+    await loadingTask.destroy();
+  }
+  const text = pages.join('\n\n').trim();
+  if (!text.replace(/--- Page \d+ ---/g, '').trim()) {
+    throw new Error('OCR could not detect readable text in this PDF.');
+  }
+  return text;
+}
+
+// Create a genuine Office Open XML .docx file. Text order is preserved where
+// PDF.js can infer it; complex columns, tables, and exact page layout may differ.
 export async function pdfToWordDocx(file: File): Promise<Blob> {
   const extracted = await extractTextFromPdf(file);
-  const title = file.name.replace(/\.[^/.]+$/, '');
-
-  // Generate an HTML-based Word document with MimeType application/msword
-  // Fully recognized by Microsoft Word, LibreOffice, Apple Pages, Google Docs!
-  const content = `
-    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head>
-      <meta charset="utf-8">
-      <title>${title}</title>
-      <style>
-        body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #1a1a1a; margin: 40px; }
-        h1 { color: #0284c7; font-size: 18pt; border-bottom: 2px solid #0284c7; padding-bottom: 6px; }
-        p { margin-bottom: 12pt; text-align: justify; }
-        .footer { font-size: 9pt; color: #64748b; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
-      </style>
-    </head>
-    <body>
-      <h1>${title}</h1>
-      <p>${extracted.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>
-      <div class="footer">Converted locally via Smart PDF Studio – Fast, Secure, Private.</div>
-    </body>
-    </html>
-  `;
-
-  return new Blob([content], {
-    type: 'application/msword;charset=utf-8',
+  const paragraphs = extracted
+    .split(/\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => new Paragraph({ children: [new TextRun(line)] }));
+  const doc = new Document({
+    sections: [{
+      children: [
+        new Paragraph({ text: file.name.replace(/\.[^/.]+$/, ''), heading: 'Title' }),
+        ...paragraphs,
+      ],
+    }],
   });
+  return Packer.toBlob(doc);
 }
 
 // 12. QR Code Generator on Canvas
-export function generateQrCodeCanvas(
-  text: string,
-  size = 280
-): HTMLCanvasElement {
+// Standards-compliant QR generation using a real QR encoder.
+export async function generateQrCodeCanvas(text: string, size = 400): Promise<HTMLCanvasElement> {
+  if (!text.trim()) throw new Error('Enter text or a URL to generate a QR code.');
+  const QRCode = (await import('qrcode')).default;
   const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return canvas;
-
-  // Background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, size, size);
-
-  // Generate pseudorandom deterministic grid based on string hash
-  const modules = 25;
-  const cellSize = (size - 40) / modules;
-  const offset = 20;
-
-  // Hash function
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = (hash << 5) - hash + text.charCodeAt(i);
-    hash |= 0;
-  }
-
-  // Draw 3 corner position markers (Standard QR format)
-  const drawCornerMarker = (x: number, y: number) => {
-    ctx.fillStyle = '#0284c7';
-    ctx.fillRect(offset + x * cellSize, offset + y * cellSize, 7 * cellSize, 7 * cellSize);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(offset + (x + 1) * cellSize, offset + (y + 1) * cellSize, 5 * cellSize, 5 * cellSize);
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(offset + (x + 2) * cellSize, offset + (y + 2) * cellSize, 3 * cellSize, 3 * cellSize);
-  };
-
-  drawCornerMarker(0, 0); // Top-left
-  drawCornerMarker(modules - 7, 0); // Top-right
-  drawCornerMarker(0, modules - 7); // Bottom-left
-
-  // Draw data modules
-  ctx.fillStyle = '#0f172a';
-  for (let row = 0; row < modules; row++) {
-    for (let col = 0; col < modules; col++) {
-      // Skip corners
-      if (
-        (row < 8 && col < 8) ||
-        (row < 8 && col >= modules - 8) ||
-        (row >= modules - 8 && col < 8)
-      ) {
-        continue;
-      }
-
-      const bit = Math.abs(Math.sin(hash + row * 17 + col * 31) * 1000) % 2 > 0.95;
-      if (bit) {
-        ctx.fillRect(
-          offset + col * cellSize,
-          offset + row * cellSize,
-          cellSize * 0.92,
-          cellSize * 0.92
-        );
-      }
-    }
-  }
-
+  await QRCode.toCanvas(canvas, text, {
+    width: size,
+    margin: 2,
+    errorCorrectionLevel: 'H',
+    color: { dark: '#0f172a', light: '#ffffff' },
+  });
   return canvas;
 }
 
-// 13. Barcode Generator on Canvas (Code 128 style)
-export function generateBarcodeCanvas(text: string, width = 380, height = 140): HTMLCanvasElement {
+// Standards-compliant Code 128 barcode rendered by JsBarcode.
+export async function generateBarcodeCanvas(text: string, width = 500, height = 160): Promise<HTMLCanvasElement> {
+  if (!text.trim()) throw new Error('Enter a value to generate a barcode.');
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return canvas;
-
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
-
-  ctx.fillStyle = '#0f172a';
-  const startX = 25;
-  const barHeight = height - 45;
-  let currX = startX;
-
-  // Guard bars
-  ctx.fillRect(currX, 15, 3, barHeight);
-  currX += 5;
-  ctx.fillRect(currX, 15, 2, barHeight);
-  currX += 6;
-
-  // Encode string characters
-  for (let i = 0; i < text.length; i++) {
-    const code = text.charCodeAt(i);
-    const pattern = [(code % 3) + 1, ((code >> 2) % 3) + 1, ((code >> 4) % 2) + 1];
-    pattern.forEach((w, idx) => {
-      if (idx % 2 === 0) {
-        ctx.fillRect(currX, 15, w * 1.5, barHeight);
-      }
-      currX += (w + 1) * 2;
+  const JsBarcode = (await import('jsbarcode')).default;
+  try {
+    JsBarcode(canvas, text, {
+      format: 'CODE128',
+      width: 2,
+      height: Math.max(60, height - 45),
+      displayValue: true,
+      margin: 12,
+      background: '#ffffff',
+      lineColor: '#0f172a',
+      font: 'monospace',
+      fontSize: 14,
     });
+  } catch {
+    throw new Error('This value cannot be encoded as a Code 128 barcode.');
   }
-
-  // End guard
-  ctx.fillRect(currX, 15, 2, barHeight);
-  currX += 5;
-  ctx.fillRect(currX, 15, 3, barHeight);
-
-  // Text label below
-  ctx.font = '14px monospace';
-  ctx.fillStyle = '#334155';
-  ctx.textAlign = 'center';
-  ctx.fillText(text.toUpperCase(), width / 2, height - 12);
-
   return canvas;
 }
 
@@ -706,4 +763,105 @@ export function generateCertificatePdf(data: {
   });
 
   return doc.output('blob');
+}
+
+
+// Split a PDF into sequential chunks of N pages.
+export async function splitPdfEveryNPages(file: File, pagesPerFile: number): Promise<Blob[]> {
+  if (!Number.isInteger(pagesPerFile) || pagesPerFile < 1) throw new Error('Pages per file must be a positive whole number.');
+  const source = await PDFDocument.load(await file.arrayBuffer());
+  const outputs: Blob[] = [];
+  for (let start = 0; start < source.getPageCount(); start += pagesPerFile) {
+    const indices = Array.from({ length: Math.min(pagesPerFile, source.getPageCount() - start) }, (_, i) => start + i);
+    const part = await PDFDocument.create();
+    const pages = await part.copyPages(source, indices);
+    pages.forEach(page => part.addPage(page));
+    outputs.push(uint8ArrayToBlob(await part.save()));
+  }
+  return outputs;
+}
+
+// Render every PDF page to a real PNG/JPEG image in the browser.
+export async function renderPdfPages(file: File, format: 'png' | 'jpg' = 'png', scale = 1.8): Promise<Blob[]> {
+  const pdfjs = await loadPdfJs();
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const doc = await task.promise;
+  const images: Blob[] = [];
+  try {
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas is unavailable for PDF rendering.');
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(
+        value => value ? resolve(value) : reject(new Error('Could not encode rendered PDF page.')),
+        format === 'jpg' ? 'image/jpeg' : 'image/png', 0.92
+      ));
+      images.push(blob);
+      canvas.width = 0; canvas.height = 0;
+      page.cleanup();
+    }
+  } finally { await task.destroy(); }
+  return images;
+}
+
+export async function getPdfInformation(file: File): Promise<Record<string, string | number>> {
+  const pdfjs = await loadPdfJs();
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const doc = await task.promise;
+  try {
+    const metadata = await doc.getMetadata();
+    const firstPage = await doc.getPage(1);
+    const viewport = firstPage.getViewport({ scale: 1 });
+    const info = (metadata.info || {}) as Record<string, unknown>;
+    return {
+      fileName: file.name, fileSize: formatBytes(file.size), pages: doc.numPages,
+      pageWidthPoints: Math.round(viewport.width), pageHeightPoints: Math.round(viewport.height),
+      title: String(info.Title || ''), author: String(info.Author || ''),
+      creator: String(info.Creator || ''), producer: String(info.Producer || ''),
+      pdfVersion: String(info.PDFFormatVersion || 'Unknown'),
+    };
+  } finally { await task.destroy(); }
+}
+
+export async function searchPdfText(file: File, query: string): Promise<string> {
+  if (!query.trim()) throw new Error('Enter a word or phrase to search for.');
+  const pdfjs = await loadPdfJs();
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const doc = await task.promise;
+  const matches: string[] = [];
+  try {
+    for (let n = 1; n <= doc.numPages; n++) {
+      const page = await doc.getPage(n);
+      const content = await page.getTextContent();
+      const text = content.items.map((item: any) => typeof item.str === 'string' ? item.str : '').join(' ');
+      const lower = text.toLocaleLowerCase();
+      const needle = query.toLocaleLowerCase();
+      let from = 0, count = 0;
+      while ((from = lower.indexOf(needle, from)) !== -1) { count++; from += needle.length; }
+      if (count) matches.push(`Page ${n}: ${count} match(es)\n${text}`);
+      page.cleanup();
+    }
+  } finally { await task.destroy(); }
+  return matches.length ? matches.join('\n\n') : `No matches for "${query}" were found in selectable PDF text.`;
+}
+
+
+export async function transformImageFile(file: File, mode: 'resize' | 'convert' | 'crop', width: number, height: number, format: 'image/jpeg' | 'image/png' | 'image/webp', quality = 0.92): Promise<Blob> {
+  if (!file.type.startsWith('image/')) throw new Error('Please select a valid image file.');
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => { const value = new Image(); value.onload = () => resolve(value); value.onerror = () => reject(new Error('Image could not be decoded.')); value.src = url; });
+    const w = mode === 'resize' ? Math.max(1, Math.min(12000, Math.round(width))) : mode === 'crop' ? Math.max(1, Math.min(img.naturalWidth, Math.round(width))) : img.naturalWidth;
+    const h = mode === 'resize' ? Math.max(1, Math.min(12000, Math.round(height))) : mode === 'crop' ? Math.max(1, Math.min(img.naturalHeight, Math.round(height))) : img.naturalHeight;
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Canvas is unavailable.');
+    if (format === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+    if (mode === 'crop') { const sx = Math.max(0, Math.floor((img.naturalWidth - w) / 2)); const sy = Math.max(0, Math.floor((img.naturalHeight - h) / 2)); ctx.drawImage(img, sx, sy, w, h, 0, 0, w, h); } else ctx.drawImage(img, 0, 0, w, h);
+    return await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('Image encoding failed.')), format, quality));
+  } finally { URL.revokeObjectURL(url); }
 }

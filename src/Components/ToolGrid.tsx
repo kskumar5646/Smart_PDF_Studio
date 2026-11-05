@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ToolDefinition, ToolCategory } from '../types';
-import { CATEGORIES } from '../tools/toolRegistry';
+import { CATEGORIES, IMPLEMENTED_TOOL_IDS } from '../tools/toolRegistry';
 import { ToolIcon } from '../icons/ToolIcons';
 import { TranslationDictionary } from '../translations';
 import { Search, Layers, ArrowRight } from 'lucide-react';
@@ -89,7 +89,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                 setInternalSearch(e.target.value);
                 onSearchChange(e.target.value);
               }}
-              placeholder="Filter 60 tools..."
+              placeholder={`Filter ${tools.length} tools...`}
               className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#07152b] border border-cyan-500/20 text-white text-xs sm:text-sm placeholder-slate-400 focus:outline-hidden focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition"
             />
           </div>
@@ -99,7 +99,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
         <div className="flex items-center justify-between text-xs text-slate-400 mb-6 px-1">
           <span>
             Showing <strong className="text-cyan-400">{filteredTools.length}</strong> of{' '}
-            <strong className="text-white">60</strong> tools
+            <strong className="text-white">{tools.length}</strong> tools
           </span>
           {activeSearch && (
             <button
@@ -132,10 +132,11 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
             {filteredTools.map((tool) => (
-              <div
+              <button
+                type="button"
                 key={tool.id}
                 onClick={() => onSelectTool(tool)}
-                className="group p-5 rounded-2xl bg-[#07162d]/90 hover:bg-[#0a1e3d] border border-cyan-500/15 hover:border-cyan-400/40 shadow-sm hover:shadow-cyan-500/10 transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
+                className="group w-full text-left p-5 rounded-2xl bg-[#07162d]/90 hover:bg-[#0a1e3d] border border-cyan-500/15 hover:border-cyan-400/40 shadow-sm hover:shadow-cyan-500/10 transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3.5">
@@ -145,11 +146,19 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                     </span>
                   </div>
 
-                  <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors mb-1.5">
-                    {tool.name}
-                  </h3>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors">{tool.name}</h3>
+                    <span className={`shrink-0 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wide border ${IMPLEMENTED_TOOL_IDS.includes(tool.id as (typeof IMPLEMENTED_TOOL_IDS)[number]) ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25' : 'bg-amber-500/10 text-amber-300 border-amber-500/25'}`}>
+                      {IMPLEMENTED_TOOL_IDS.includes(tool.id as (typeof IMPLEMENTED_TOOL_IDS)[number]) ? 'Available' : 'In development'}
+                    </span>
+                  </div>
                   <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">
                     {tool.shortDescription}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-2">
+                    Input: {tool.inputType === 'multiple-pdf' ? 'Multiple PDFs' : tool.inputType === 'multiple-images' ? 'Multiple images' : tool.inputType === 'pdf' ? 'PDF' : tool.inputType === 'image' ? 'Image' : tool.inputType === 'text' ? 'Text' : tool.inputType === 'form' ? 'Form' : 'None'}
+                    <span className="mx-1.5 text-slate-700">·</span>
+                    Output: {tool.outputType.toUpperCase()}
                   </p>
                 </div>
 
@@ -159,7 +168,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({
                     <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}

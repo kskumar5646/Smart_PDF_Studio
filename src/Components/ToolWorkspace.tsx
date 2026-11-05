@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { ToolDefinition, ProcessingState } from '../types';
 import { ToolIcon } from '../icons/ToolIcons';
+import { IMPLEMENTED_TOOL_IDS } from '../tools/toolRegistry';
 import { TranslationDictionary } from '../translations';
 import {
   compressImageFile,
@@ -13,6 +14,8 @@ import {
   imagesToPdf,
   cropPdfFile,
   extractTextFromPdf,
+  recognizeImageText,
+  recognizePdfText,
   pdfToWordDocx,
   generateQrCodeCanvas,
   generateBarcodeCanvas,
@@ -21,6 +24,12 @@ import {
   generateCertificatePdf,
   uint8ArrayToBlob,
   formatBytes,
+  renderPdfPages,
+  splitPdfEveryNPages,
+  getPdfInformation,
+  searchPdfText,
+  transformImageFile,
+  organizePdfPages,
 } from '../utilities/pdfProcessors';
 import {
   ArrowLeft,
@@ -73,37 +82,39 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const [qrText, setQrText] = useState<string>('https://smartpdfstudio.app');
   const [barcodeText, setBarcodeText] = useState<string>('STUDIO-98231');
   const [copiedText, setCopiedText] = useState(false);
+  const [ocrLanguage, setOcrLanguage] = useState('eng');
+  const [pagesPerPart, setPagesPerPart] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [imageWidth, setImageWidth] = useState(1200);
+  const [imageHeight, setImageHeight] = useState(1200);
 
   // Form Tool States (Invoice, Resume, Certificate)
   const [invoiceData, setInvoiceData] = useState({
-    invoiceNumber: 'INV-2026-001',
-    companyName: 'Studio Digital Ltd',
-    clientName: 'Acme Corporation',
-    date: '2026-10-02',
-    taxRate: 10,
-    items: [
-      { description: 'Professional PDF Consulting', qty: 1, rate: 250 },
-      { description: 'Document Design & Security Audit', qty: 2, rate: 120 },
-    ],
+    invoiceNumber: '',
+    companyName: '',
+    clientName: '',
+    date: '',
+    taxRate: 0,
+    items: [{ description: '', qty: 1, rate: 0 }],
   });
 
   const [resumeData, setResumeData] = useState({
-    fullName: 'Alex Morgan',
-    jobTitle: 'Senior Software Engineer',
-    email: 'alex.morgan@example.com',
-    phone: '+1 (555) 019-2834',
-    summary: 'Senior software architect with over 8 years of experience designing high-throughput client-side document processing systems, web tools, and browser privacy platforms.',
-    skills: 'TypeScript, React, Node.js, WebAssembly, Security Architecture, UI/UX Systems',
-    experience: 'Principal Frontend Engineer — CloudStudio (2022 - Present)\n• Designed real-time client-side PDF manipulation architecture\n• Improved user throughput by 300%',
-    education: 'B.S. in Computer Science — State University of Technology (2018 - 2022)',
+    fullName: '',
+    jobTitle: '',
+    email: '',
+    phone: '',
+    summary: '',
+    skills: '',
+    experience: '',
+    education: '',
   });
 
   const [certData, setCertData] = useState({
-    recipientName: 'Jordan Lee',
+    recipientName: '',
     title: 'CERTIFICATE OF ACHIEVEMENT',
-    reason: 'For outstanding commitment, continuous technical excellence, and dedication to privacy-first web standards.',
-    date: 'October 2, 2026',
-    issuer: 'Smart PDF Studio Board',
+    reason: '',
+    date: '',
+    issuer: '',
   });
 
   // Canvas Signature pad state
@@ -117,10 +128,32 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     rgb: 'rgb(2, 132, 199)',
   });
 
-  // File Input Handler
+  const isAcceptedFile = (file: File): boolean => {
+    const name = file.name.toLowerCase();
+    if (tool.inputType === 'image' || tool.inputType === 'multiple-images') {
+      return ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || /\.(jpg|jpeg|png|webp)$/i.test(name);
+    }
+    if (tool.inputType === 'word') return /\.(doc|docx)$/i.test(name);
+    if (tool.inputType === 'spreadsheet') return /\.(xls|xlsx|csv)$/i.test(name);
+    if (tool.inputType === 'presentation') return /\.(ppt|pptx)$/i.test(name);
+    if (tool.inputType === 'text') return /\.(txt|html|md)$/i.test(name);
+    return file.type === 'application/pdf' || name.endsWith('.pdf');
+  };
+
+  // File Input Handler: reject mismatched file types before processing.
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selected = Array.from(e.target.files);
+      e.currentTarget.value = '';
+      if (selected.some((file) => !isAcceptedFile(file))) {
+        setProcessingState({
+          status: 'error', progress: 0, stageMessage: '',
+          errorMessage: tool.inputType === 'image' || tool.inputType === 'multiple-images'
+            ? 'This tool accepts image files only (JPG, PNG or WebP).'
+            : 'One or more selected files have the wrong format for this tool.',
+        });
+        return;
+      }
       if (tool.inputType === 'multiple-pdf' || tool.inputType === 'multiple-images') {
         setFiles((prev) => [...prev, ...selected]);
       } else {
@@ -145,6 +178,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const dropped = Array.from(e.dataTransfer.files);
+      if (dropped.some((file) => !isAcceptedFile(file))) {
+        setProcessingState({
+          status: 'error', progress: 0, stageMessage: '',
+          errorMessage: 'One or more dropped files have the wrong format for this tool.',
+        });
+        return;
+      }
       if (tool.inputType === 'multiple-pdf' || tool.inputType === 'multiple-images') {
         setFiles((prev) => [...prev, ...dropped]);
       } else {
@@ -167,8 +207,21 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     });
 
     try {
+      // Dedicated image resize, crop and format conversion tools.
+      if (['resize-image', 'crop-image', 'convert-image'].includes(tool.id)) {
+        if (!files.length) throw new Error('Please select an image file first.');
+        const file = files[0];
+        const mode = tool.id === 'resize-image' ? 'resize' : tool.id === 'crop-image' ? 'crop' : 'convert';
+        setProcessingState(prev => ({ ...prev, progress: 55, stageMessage: mode === 'resize' ? 'Resizing image…' : mode === 'crop' ? 'Cropping image from the centre…' : 'Converting image format…' }));
+        const blob = await transformImageFile(file, mode, imageWidth, imageHeight, imageFormat, quality);
+        const ext = imageFormat === 'image/jpeg' ? 'jpg' : imageFormat.split('/')[1];
+        const url = URL.createObjectURL(blob);
+        setProcessingState({ status: 'success', progress: 100, stageMessage: mode === 'resize' ? 'Image resized successfully.' : mode === 'crop' ? 'Centre crop created successfully.' : 'Image converted successfully.', resultUrl: url, resultFileName: `${mode}_${file.name.replace(/\\.[^/.]+$/, '')}.${ext}`, originalSize: file.size, resultSize: blob.size, previewUrl: url });
+        return;
+      }
+
       // 1. Image Compressor / Compress Image
-      if (tool.id === 'image-compressor' || tool.id === 'compress-image' || tool.id === 'resize-image' || tool.id === 'convert-image' || tool.id === 'crop-image') {
+      if (tool.id === 'image-compressor' || tool.id === 'compress-image') {
         if (files.length === 0) throw new Error('Please select an image file first.');
         const originalFile = files[0];
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Compressing image via HTML5 Canvas...' }));
@@ -221,7 +274,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         setProcessingState({
           status: 'success',
           progress: 100,
-          stageMessage: 'PDF compressed successfully!',
+          stageMessage: 'PDF re-saved with basic object-stream optimization. File size may increase or decrease.',
           resultUrl: url,
           resultFileName: `optimized_${files[0].name}`,
           originalSize: files[0].size,
@@ -231,25 +284,35 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       }
 
       // 4. Split PDF / Split by count
-      if (tool.id === 'split-pdf' || tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') {
+      if (tool.id === 'split-pdf') {
         if (files.length === 0) throw new Error('Please select a PDF file.');
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Extracting selected pages...' }));
 
-        // Parse range like "1-3" or "1,2,5"
+        // Parse comma-separated page numbers and ranges, validating every page.
         const pages: number[] = [];
-        if (splitRange.includes('-')) {
-          const parts = splitRange.split('-').map((s) => parseInt(s.trim()));
-          if (!isNaN(parts[0]) && !isNaN(parts[1])) {
-            for (let i = parts[0]; i <= parts[1]; i++) pages.push(i);
+        const source = await PDFDocument.load(await files[0].arrayBuffer());
+        const pageCount = source.getPageCount();
+        for (const token of splitRange.split(',')) {
+          const value = token.trim();
+          const range = value.match(/^(\\d+)\\s*-\\s*(\\d+)$/);
+          if (range) {
+            const first = Number(range[1]);
+            const last = Number(range[2]);
+            if (first < 1 || last < first || last > pageCount) {
+              throw new Error(`Enter a page range between 1 and ${pageCount}.`);
+            }
+            for (let page = first; page <= last; page++) pages.push(page);
+          } else if (/^\\d+$/.test(value)) {
+            const page = Number(value);
+            if (page < 1 || page > pageCount) throw new Error(`Page numbers must be between 1 and ${pageCount}.`);
+            pages.push(page);
+          } else {
+            throw new Error('Use page numbers like 1,2,5 or ranges like 1-3,6-8.');
           }
-        } else {
-          splitRange.split(',').forEach((num) => {
-            const p = parseInt(num.trim());
-            if (!isNaN(p)) pages.push(p);
-          });
         }
-
-        const validPages = pages.length > 0 ? pages : [1];
+        if (pages.length === 0) throw new Error('Enter at least one page number or range.');
+        if (new Set(pages).size !== pages.length) throw new Error('Do not repeat page numbers in the split range.');
+        const validPages = pages;
         const splitBytes = await splitPdfFile(files[0], validPages);
         const blob = uint8ArrayToBlob(splitBytes);
         const url = URL.createObjectURL(blob);
@@ -310,7 +373,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       }
 
       // 7. Page Numbers
-      if (tool.id === 'page-numbers' || tool.id === 'header-footer') {
+      if (tool.id === 'page-numbers') {
         if (files.length === 0) throw new Error('Please select a PDF file.');
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Adding pagination markers...' }));
         const numberedBytes = await addPageNumbersToPdf(files[0], pageNumberPosition);
@@ -372,7 +435,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       if (tool.id === 'pdf-to-text' || tool.id === 'ocr-pdf' || tool.id === 'image-ocr') {
         if (files.length === 0) throw new Error('Please select a file.');
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Extracting text content...' }));
-        const text = await extractTextFromPdf(files[0]);
+        const text = tool.id === 'image-ocr'
+          ? await recognizeImageText(files[0], ocrLanguage)
+          : tool.id === 'ocr-pdf'
+          ? await recognizePdfText(files[0], ocrLanguage)
+          : await extractTextFromPdf(files[0]);
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
 
@@ -400,7 +467,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           progress: 100,
           stageMessage: 'Converted to Word document successfully!',
           resultUrl: url,
-          resultFileName: `${files[0].name.replace(/\.[^/.]+$/, '')}.doc`,
+          resultFileName: `${files[0].name.replace(/\.[^/.]+$/, '')}.docx`,
           originalSize: files[0].size,
           resultSize: docxBlob.size,
         });
@@ -410,7 +477,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       // 12. QR Code Maker
       if (tool.id === 'qr-code-maker' || tool.id === 'qr-code-to-pdf') {
         setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Generating QR matrix...' }));
-        const canvas = generateQrCodeCanvas(qrText, 400);
+        const canvas = await generateQrCodeCanvas(qrText, 400);
 
         if (tool.id === 'qr-code-to-pdf') {
           const doc = new jsPDF();
@@ -433,19 +500,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             resultSize: blob.size,
           });
         } else {
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const url = URL.createObjectURL(blob);
-              setProcessingState({
-                status: 'success',
-                progress: 100,
-                stageMessage: 'QR Code generated!',
-                resultUrl: url,
-                resultFileName: 'qrcode.png',
-                previewUrl: url,
-                resultSize: blob.size,
-              });
-            }
+          const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Could not export the QR image.')), 'image/png');
+          });
+          const url = URL.createObjectURL(blob);
+          setProcessingState({
+            status: 'success', progress: 100, stageMessage: 'QR Code generated!',
+            resultUrl: url, resultFileName: 'qrcode.png', previewUrl: url, resultSize: blob.size,
           });
         }
         return;
@@ -454,20 +515,15 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       // 13. Barcode Maker
       if (tool.id === 'barcode-maker') {
         setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Drawing Code 128 barcode...' }));
-        const canvas = generateBarcodeCanvas(barcodeText);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            setProcessingState({
-              status: 'success',
-              progress: 100,
-              stageMessage: 'Barcode generated successfully!',
-              resultUrl: url,
-              resultFileName: `barcode_${barcodeText}.png`,
-              previewUrl: url,
-              resultSize: blob.size,
-            });
-          }
+        const canvas = await generateBarcodeCanvas(barcodeText);
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Could not export the barcode image.')), 'image/png');
+        });
+        const url = URL.createObjectURL(blob);
+        setProcessingState({
+          status: 'success', progress: 100, stageMessage: 'Barcode generated successfully!',
+          resultUrl: url, resultFileName: 'barcode_' + barcodeText.replace(/[^a-zA-Z0-9_-]/g, '_') + '.png',
+          previewUrl: url, resultSize: blob.size,
         });
         return;
       }
@@ -523,120 +579,159 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         return;
       }
 
-      // 17. Protect PDF / Encrypt
+      // The current browser-side pdf-lib engine cannot apply standard PDF
+      // password encryption. Never produce an unencrypted file and call it protected.
       if (tool.id === 'protect-pdf' || tool.id === 'encrypt-pdf') {
-        if (files.length === 0) throw new Error('Please select a PDF file.');
-        if (!protectPassword) throw new Error('Please enter a password.');
-        if (protectPassword !== confirmPassword) throw new Error('Passwords do not match.');
-
-        setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Preparing a protected PDF copy...' }));
-        const pdfBytes = await files[0].arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes);
-        // Save PDF with updated metadata and secured streams
-        pdfDoc.setTitle(`Protected - ${files[0].name}`);
-        const saved = await pdfDoc.save();
-        const blob = uint8ArrayToBlob(saved);
-        const url = URL.createObjectURL(blob);
-
-        setProcessingState({
-          status: 'success',
-          progress: 100,
-          stageMessage: 'Protected PDF copy created. This browser build does not add a PDF password encryption layer.',
-          resultUrl: url,
-          resultFileName: `protected_${files[0].name}`,
-          resultSize: blob.size,
-        });
-        return;
+        throw new Error('Real PDF password encryption is not available in this browser build yet. No protected file was created. This tool is disabled rather than giving a false security guarantee.');
       }
 
-      // 18. Sign PDF (Interactive Signature)
-      if (tool.id === 'sign-pdf' || tool.id === 'sign-image') {
-        if (files.length === 0) throw new Error('Please select a file to sign.');
-        setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Applying a visible signature mark...' }));
-
-        const pdfBytes = await files[0].arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-        const pages = pdfDoc.getPages();
-        const firstPage = pages[0];
-
-        // Draw a visible signature mark at the bottom of the first PDF page
-        firstPage.drawRectangle({
-          x: 40,
-          y: 40,
-          width: 220,
-          height: 60,
-          borderColor: rgb(0.01, 0.52, 0.78),
-          borderWidth: 1.5,
-          color: rgb(0.96, 0.98, 1),
+      // 18. Visible electronic signature mark (not a cryptographic certificate).
+      if (tool.id === 'sign-pdf') {
+        if (files.length === 0) throw new Error('Please select a PDF file to sign.');
+        if (!sigCanvasRef.current || !hasDrawnSig) throw new Error('Please draw your signature in the signature box first.');
+        setProcessingState((prev) => ({ ...prev, progress: 50, stageMessage: 'Placing your visible signature on the first page...' }));
+        const pdfDoc = await PDFDocument.load(await files[0].arrayBuffer());
+        const pngBytes = await fetch(sigCanvasRef.current.toDataURL('image/png')).then((response) => response.arrayBuffer());
+        const signature = await pdfDoc.embedPng(pngBytes);
+        const page = pdfDoc.getPages()[0];
+        const pageWidth = page.getWidth();
+        const pageHeight = page.getHeight();
+        const targetWidth = Math.min(180, pageWidth * 0.35);
+        const targetHeight = targetWidth * (signature.height / signature.width);
+        page.drawImage(signature, {
+          x: Math.max(24, pageWidth - targetWidth - 36),
+          y: 36,
+          width: targetWidth,
+          height: Math.min(targetHeight, pageHeight * 0.18),
         });
-
-        const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-        firstPage.drawText('Digitally Signed with Smart PDF Studio', {
-          x: 48,
-          y: 80,
-          size: 9,
-          font,
-          color: rgb(0.01, 0.52, 0.78),
-        });
-
-        firstPage.drawText(`Date: ${new Date().toLocaleDateString()}`, {
-          x: 48,
-          y: 65,
-          size: 8,
-          font,
-          color: rgb(0.3, 0.35, 0.4),
-        });
-
-        firstPage.drawText('Verified Client-Side Signature', {
-          x: 48,
-          y: 50,
-          size: 8,
-          font,
-          color: rgb(0.1, 0.7, 0.3),
-        });
-
-        const saved = await pdfDoc.save();
-        const blob = uint8ArrayToBlob(saved);
+        const blob = uint8ArrayToBlob(await pdfDoc.save());
         const url = URL.createObjectURL(blob);
-
         setProcessingState({
           status: 'success',
           progress: 100,
-          stageMessage: 'Visible signature mark applied successfully!',
+          stageMessage: 'Visible signature image added. This is not a certificate-based digital signature.',
           resultUrl: url,
           resultFileName: `signed_${files[0].name}`,
-          resultSize: blob.size,
-        });
-        return;
-      }
-
-      // Fallback for remaining browser tools (e.g. Extract, Remove, Duplicate, Flatten, Info, etc.)
-      if (files.length > 0) {
-        setProcessingState((prev) => ({ ...prev, progress: 60, stageMessage: 'Processing document...' }));
-        const pdfBytes = await files[0].arrayBuffer();
-        const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-
-        if (tool.id === 'flatten-pdf') {
-          pdfDoc.getForm().flatten();
-        }
-
-        const saved = await pdfDoc.save();
-        const blob = uint8ArrayToBlob(saved);
-        const url = URL.createObjectURL(blob);
-
-        setProcessingState({
-          status: 'success',
-          progress: 100,
-          stageMessage: 'Operation completed successfully!',
-          resultUrl: url,
-          resultFileName: `processed_${files[0].name}`,
           originalSize: files[0].size,
           resultSize: blob.size,
         });
         return;
       }
 
-      throw new Error('Please provide an input file or configure settings.');
+      // Page-level operations: extract, remove, reorder, or duplicate actual PDF pages.
+      if (['extract-pages', 'remove-pages', 'reorder-pages', 'duplicate-pages'].includes(tool.id)) {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        const operation = tool.id === 'extract-pages' ? 'extract'
+          : tool.id === 'remove-pages' ? 'remove'
+          : tool.id === 'reorder-pages' ? 'reorder' : 'duplicate';
+        setProcessingState(prev => ({ ...prev, progress: 45, stageMessage: 'Applying page changes to the PDF…' }));
+        const result = await organizePdfPages(files[0], operation, splitRange);
+        const blob = uint8ArrayToBlob(result.bytes);
+        const url = URL.createObjectURL(blob);
+        const prefixes: Record<string, string> = {
+          'extract-pages': 'extracted',
+          'remove-pages': 'pages_removed',
+          'reorder-pages': 'reordered',
+          'duplicate-pages': 'duplicated',
+        };
+        const actionLabel = operation === 'extract' ? 'Extracted' : operation === 'remove' ? 'Removed' : operation === 'reorder' ? 'Reordered' : 'Duplicated';
+        setProcessingState({
+          status: 'success',
+          progress: 100,
+          stageMessage: `${actionLabel} selected page(s). Output contains ${result.outputPageCount} page(s).`,
+          resultUrl: url,
+          resultFileName: `${prefixes[tool.id]}_${files[0].name}`,
+          originalSize: files[0].size,
+          resultSize: blob.size,
+        });
+        return;
+      }
+
+      // Render PDF pages as PNG/JPG files and package them for one download.
+      if (tool.id === 'pdf-to-jpg' || tool.id === 'pdf-to-png') {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        setProcessingState(prev => ({ ...prev, progress: 35, stageMessage: 'Rendering PDF pages in your browser...' }));
+        const format = tool.id === 'pdf-to-jpg' ? 'jpg' : 'png';
+        const pages = await renderPdfPages(files[0], format);
+        const JSZip = (await import('jszip')).default;
+        const zip = new JSZip();
+        pages.forEach((blob, index) => zip.file(`page-${String(index + 1).padStart(3, '0')}.${format}`, blob));
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        setProcessingState({ status: 'success', progress: 100, stageMessage: `Rendered ${pages.length} PDF page(s) to ${format.toUpperCase()} images.`, resultUrl: url, resultFileName: `${files[0].name.replace(/\\.pdf$/i, '')}-${format}-pages.zip`, originalSize: files[0].size, resultSize: blob.size });
+        return;
+      }
+
+      // Split a document into sequential files with N pages each.
+      if (tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        const count = pagesPerPart;
+        if (!Number.isInteger(count) || count < 1) throw new Error('Enter a positive whole number of pages per output file.');
+        const chunks = await splitPdfEveryNPages(files[0], count);
+        const JSZip = (await import('jszip')).default;
+        const zip = new JSZip();
+        chunks.forEach((blob, index) => zip.file(`part-${String(index + 1).padStart(3, '0')}.pdf`, blob));
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        setProcessingState({ status: 'success', progress: 100, stageMessage: `Created ${chunks.length} PDF part(s), up to ${count} pages each.`, resultUrl: url, resultFileName: `${files[0].name.replace(/\\.pdf$/i, '')}-split.zip`, originalSize: files[0].size, resultSize: blob.size });
+        return;
+      }
+
+      if (tool.id === 'pdf-info') {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        const info = await getPdfInformation(files[0]);
+        const text = Object.entries(info).map(([key, value]) => `${key}: ${value}`).join('\\n');
+        setProcessingState({ status: 'success', progress: 100, stageMessage: 'PDF information inspected successfully.', extractedText: text, resultFileName: 'pdf-information.txt', resultUrl: URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })) });
+        return;
+      }
+
+      if (tool.id === 'search-pdf') {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        const query = searchQuery.trim();
+        const text = await searchPdfText(files[0], query);
+        setProcessingState({ status: 'success', progress: 100, stageMessage: 'PDF text search completed.', extractedText: text, resultFileName: 'pdf-search-results.txt', resultUrl: URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })) });
+        return;
+      }
+
+      // Do not silently re-save an unchanged PDF for tools that have no
+      // implementation. A visible error is safer than a false success.
+      const unavailable: Record<string, string> = {
+        'pdf-split-by-count': 'Split by fixed page count is not implemented yet.',
+        'split-every-n-pages': 'Splitting at fixed N-page intervals is not implemented yet.',
+        'header-footer': 'Custom headers and footers are not implemented yet; use Page Numbers for pagination.',
+        'pdf-to-excel': 'PDF to Excel conversion is not implemented yet.',
+        'word-to-pdf': 'Word to PDF conversion requires a DOCX rendering engine and is not implemented yet.',
+        'excel-to-pdf': 'Excel to PDF conversion requires a spreadsheet rendering engine and is not implemented yet.',
+        'powerpoint-to-pdf': 'PowerPoint to PDF conversion requires a slide rendering engine and is not implemented yet.',
+        'pdf-to-powerpoint': 'PDF to PowerPoint conversion is not implemented yet.',
+        'pdf-to-jpg': 'PDF page image rendering is not implemented yet.',
+        'pdf-to-png': 'PDF page image rendering is not implemented yet.',
+        'pdf-to-pdfa': 'Validated PDF/A archival conversion is not implemented yet.',
+        'unlock-pdf': 'PDF decryption is not implemented yet. Use a trusted PDF application and the document password.',
+        'redact-pdf': 'Permanent secure redaction is not implemented yet. Drawing a black box is not safe redaction.',
+        'pdf-annotation': 'PDF annotation editing is not implemented yet.',
+        'compare-pdfs': 'A true visual and text comparison engine is not implemented yet.',
+        'scan-to-pdf': 'Camera capture workflow is not implemented yet.',
+        'text-to-pdf': 'Text-to-PDF workflow is not implemented yet.',
+        'html-to-pdf': 'HTML-to-PDF rendering is not implemented yet.',
+        'resize-pdf': 'PDF page resizing is not implemented yet.',
+        'pdf-metadata': 'PDF metadata inspection and editing are not implemented yet.',
+        'pdf-info': 'PDF information inspection is not implemented yet.',
+        'search-pdf': 'Searchable PDF text indexing is not implemented yet.',
+        'pdf-page-preview': 'PDF page thumbnail preview is not implemented yet.',
+        'organize-pdf': 'Visual page organizer is not implemented yet.',
+        'color-picker': 'Image color sampling is not implemented yet.',
+        'letter-to-pdf': 'Letter builder is not implemented yet.',
+        'poster-to-pdf': 'Poster builder is not implemented yet.',
+        'convert-to-pdf': 'This is a category, not a processing tool.',
+        'convert-from-pdf': 'This is a category, not a processing tool.',
+        'edit-pdf': 'This is a category, not a processing tool.',
+        'security': 'This is a category, not a processing tool.',
+        'image-tools': 'This is a category, not a processing tool.',
+        'utilities': 'This is a category, not a processing tool.',
+        'more-tools': 'This is a category, not a processing tool.',
+      };
+      throw new Error(unavailable[tool.id] || `${tool.name} is not implemented yet. No output file was created.`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An error occurred during processing.';
       setProcessingState({
@@ -647,6 +742,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       });
     }
   };
+
 
   // Reset workspace
   const handleReset = () => {
@@ -671,12 +767,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   };
 
   // Signature canvas mouse listeners
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = sigCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const rect = canvas.getBoundingClientRect();
+    e.currentTarget.setPointerCapture(e.pointerId);
     ctx.beginPath();
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
     ctx.strokeStyle = '#0284c7';
@@ -686,7 +783,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     setHasDrawnSig(true);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isDrawingSig) return;
     const canvas = sigCanvasRef.current;
     if (!canvas) return;
@@ -707,6 +804,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setHasDrawnSig(false);
     setHasDrawnSig(false);
   };
 
@@ -736,12 +834,19 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 <div className="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-500/30 mb-1">
                   {tool.category}
                 </div>
+                <div className={`w-fit px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border mb-1 ${IMPLEMENTED_TOOL_IDS.includes(tool.id as (typeof IMPLEMENTED_TOOL_IDS)[number]) ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25' : 'bg-amber-500/10 text-amber-300 border-amber-500/25'}`}>
+                  {IMPLEMENTED_TOOL_IDS.includes(tool.id as (typeof IMPLEMENTED_TOOL_IDS)[number]) ? 'Processing available' : 'In development — not yet available'}
+                </div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
                   {tool.name}
                 </h1>
                 <p className="text-slate-400 text-xs sm:text-sm mt-0.5">
                   {tool.description}
                 </p>
+                <div className="flex flex-wrap gap-2 mt-2 text-[10px] font-semibold">
+                  <span className="px-2 py-1 rounded-md bg-slate-900 text-slate-300 border border-slate-700">Input: {tool.inputType === 'multiple-pdf' ? 'Multiple PDFs' : tool.inputType === 'multiple-images' ? 'Multiple images' : tool.inputType === 'pdf' ? 'PDF' : tool.inputType === 'image' ? 'Image' : tool.inputType === 'text' ? 'Text' : tool.inputType === 'form' ? 'Form' : tool.inputType === 'word' ? 'Word document' : tool.inputType === 'spreadsheet' ? 'Spreadsheet' : tool.inputType === 'presentation' ? 'Presentation' : 'None'}</span>
+                  <span className="px-2 py-1 rounded-md bg-slate-900 text-cyan-300 border border-slate-700">Output: {tool.outputType.toUpperCase()}</span>
+                </div>
               </div>
             </div>
 
@@ -772,6 +877,12 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   accept={
                     tool.inputType === 'image' || tool.inputType === 'multiple-images'
                       ? 'image/jpeg,image/png,image/webp'
+                      : tool.inputType === 'word'
+                      ? '.doc,.docx'
+                      : tool.inputType === 'spreadsheet'
+                      ? '.xls,.xlsx,.csv'
+                      : tool.inputType === 'presentation'
+                      ? '.ppt,.pptx'
                       : tool.inputType === 'text'
                       ? '.txt,.html,.md'
                       : '.pdf'
@@ -788,8 +899,18 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                     {t.dragDropText}
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-400 mb-4">
-                    {tool.inputType.includes('image')
+                    {tool.inputType === 'image' || tool.inputType === 'multiple-images'
                       ? 'Supported formats: JPG, PNG, WEBP'
+                      : tool.inputType === 'word'
+                      ? 'Supported formats: DOC, DOCX'
+                      : tool.inputType === 'spreadsheet'
+                      ? 'Supported formats: XLS, XLSX, CSV'
+                      : tool.inputType === 'presentation'
+                      ? 'Supported formats: PPT, PPTX'
+                      : tool.inputType === 'text'
+                      ? 'Supported formats: TXT, HTML, MD'
+                      : tool.inputType === 'multiple-pdf'
+                      ? 'Supported format: PDF (select multiple files)'
                       : 'Supported format: Standard PDF'}
                   </p>
                   <label
@@ -840,6 +961,51 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
               <span className="w-2 h-2 rounded-full bg-cyan-400" />
               {t.settings}
             </h4>
+
+            {(tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') && (
+              <label className="block max-w-xs text-xs font-semibold text-slate-300">
+                Pages in each output PDF
+                <input type="number" min="1" max="500" value={pagesPerPart} onChange={e => setPagesPerPart(Math.max(1, Number(e.target.value) || 1))} className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white" />
+              </label>
+            )}
+            {tool.id === 'search-pdf' && (
+              <label className="block max-w-md text-xs font-semibold text-slate-300">
+                Word or phrase to find
+                <input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Enter search text" className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white" />
+              </label>
+            )}
+            {(tool.id === 'ocr-pdf' || tool.id === 'image-ocr') && (
+              <div className="mb-5 max-w-sm">
+                <label className="block text-xs font-semibold text-slate-300 mb-2">OCR language</label>
+                <select value={ocrLanguage} onChange={(e) => setOcrLanguage(e.target.value)} className="w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs sm:text-sm focus:outline-hidden focus:border-cyan-400">
+                  <option value="eng">English</option><option value="hin">Hindi</option><option value="eng+hin">English + Hindi</option>
+                  <option value="deu">German</option><option value="spa">Spanish</option><option value="fra">French</option><option value="por">Portuguese</option><option value="rus">Russian</option><option value="ara">Arabic</option><option value="chi_sim">Chinese (Simplified)</option><option value="jpn">Japanese</option>
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1">OCR may download language and engine resources. Your document is processed in the browser.</p>
+              </div>
+            )}
+
+            {(tool.id === 'resize-image' || tool.id === 'crop-image' || tool.id === 'convert-image') && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {tool.id !== 'convert-image' && <>
+                  <label className="text-xs text-slate-300">{tool.id === 'crop-image' ? 'Crop width (px)' : 'Output width (px)'}
+                    <input type="number" min="1" max="12000" value={imageWidth} onChange={e => setImageWidth(Math.max(1, Math.min(12000, Number(e.target.value) || 1)))} className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white" />
+                  </label>
+                  <label className="text-xs text-slate-300">{tool.id === 'crop-image' ? 'Crop height (px)' : 'Output height (px)'}
+                    <input type="number" min="1" max="12000" value={imageHeight} onChange={e => setImageHeight(Math.max(1, Math.min(12000, Number(e.target.value) || 1)))} className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white" />
+                  </label>
+                </>}
+                <label className="text-xs text-slate-300">Output format
+                  <select value={imageFormat} onChange={e => setImageFormat(e.target.value as 'image/jpeg' | 'image/png' | 'image/webp')} className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                    <option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option>
+                  </select>
+                </label>
+                <label className="text-xs text-slate-300">Quality: {Math.round(quality * 100)}%
+                  <input type="range" min="0.1" max="1" step="0.05" value={quality} onChange={e => setQuality(Number(e.target.value))} className="mt-3 w-full accent-cyan-500" />
+                </label>
+                {tool.id === 'crop-image' && <p className="sm:col-span-2 text-[11px] text-slate-500">Crop is centred automatically. Enter the required crop dimensions; the output is clipped to the image bounds.</p>}
+              </div>
+            )}
 
             {/* 1. Image Compressor settings */}
             {(tool.id === 'image-compressor' || tool.id === 'compress-image') && (
@@ -950,7 +1116,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             )}
 
             {/* 4. Page Numbers settings */}
-            {(tool.id === 'page-numbers' || tool.id === 'header-footer') && (
+            {tool.id === 'page-numbers' && (
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-2">
                   Number Placement
@@ -979,10 +1145,10 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             )}
 
             {/* 5. Split PDF settings */}
-            {(tool.id === 'split-pdf' || tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') && (
+            {(tool.id === 'split-pdf' || tool.id === 'extract-pages' || tool.id === 'remove-pages' || tool.id === 'reorder-pages' || tool.id === 'duplicate-pages') && (
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Page Range or Page Numbers to Extract
+                  {tool.id === 'reorder-pages' ? 'Complete page order (include every page once)' : tool.id === 'duplicate-pages' ? 'Pages to duplicate' : tool.id === 'remove-pages' ? 'Pages to remove' : 'Page range or page numbers to extract'}
                 </label>
                 <input
                   type="text"
@@ -1079,110 +1245,96 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             {/* 10. Invoice Maker Form */}
             {tool.id === 'invoice-maker' && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Your Company
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    ['Company name', 'companyName'],
+                    ['Client name', 'clientName'],
+                    ['Invoice number', 'invoiceNumber'],
+                    ['Invoice date', 'date'],
+                  ].map(([label, key]) => (
+                    <label key={key} className="block text-xs font-semibold text-slate-300">
+                      {label}
+                      <input type={key === 'date' ? 'date' : 'text'} value={invoiceData[key as keyof typeof invoiceData] as string}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, [key]: e.target.value })}
+                        className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                     </label>
-                    <input
-                      type="text"
-                      value={invoiceData.companyName}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, companyName: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Client Name
-                    </label>
-                    <input
-                      type="text"
-                      value={invoiceData.clientName}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, clientName: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Invoice #
-                    </label>
-                    <input
-                      type="text"
-                      value={invoiceData.invoiceNumber}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
+                  ))}
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Tax rate (%)
+                    <input type="number" min="0" max="100" value={invoiceData.taxRate}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, taxRate: Number(e.target.value) })}
+                      className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-slate-300">Invoice item</p>
+                  {invoiceData.items.map((item, index) => (
+                    <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <input aria-label="Item description" placeholder="Description" value={item.description}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, items: invoiceData.items.map((row, i) => i === index ? { ...row, description: e.target.value } : row) })}
+                        className="sm:col-span-1 p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                      <input aria-label="Quantity" type="number" min="1" value={item.qty}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, items: invoiceData.items.map((row, i) => i === index ? { ...row, qty: Number(e.target.value) } : row) })}
+                        className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                      <input aria-label="Rate" type="number" min="0" step="0.01" value={item.rate}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, items: invoiceData.items.map((row, i) => i === index ? { ...row, rate: Number(e.target.value) } : row) })}
+                        className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => setInvoiceData({ ...invoiceData, items: [...invoiceData.items, { description: '', qty: 1, rate: 0 }] })}
+                    className="px-3 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/20">
+                    + Add invoice item
+                  </button>
                 </div>
               </div>
             )}
 
             {/* 11. Resume Builder Form */}
             {tool.id === 'resume-builder' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={resumeData.fullName}
-                      onChange={(e) => setResumeData({ ...resumeData, fullName: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Target Role / Job Title
-                    </label>
-                    <input
-                      type="text"
-                      value={resumeData.jobTitle}
-                      onChange={(e) => setResumeData({ ...resumeData, jobTitle: e.target.value })}
-                      className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Summary
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  ['Full name', 'fullName'],
+                  ['Target job title', 'jobTitle'],
+                  ['Email', 'email'],
+                  ['Phone', 'phone'],
+                  ['Professional summary', 'summary'],
+                  ['Skills', 'skills'],
+                  ['Experience', 'experience'],
+                  ['Education', 'education'],
+                ].map(([label, key]) => (
+                  <label key={key} className="block text-xs font-semibold text-slate-300">
+                    {label}
+                    {['summary', 'skills', 'experience', 'education'].includes(key) ? (
+                      <textarea rows={key === 'summary' ? 2 : 3} value={resumeData[key as keyof typeof resumeData]}
+                        onChange={(e) => setResumeData({ ...resumeData, [key]: e.target.value })}
+                        className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                    ) : (
+                      <input type={key === 'email' ? 'email' : key === 'phone' ? 'tel' : 'text'} value={resumeData[key as keyof typeof resumeData]}
+                        onChange={(e) => setResumeData({ ...resumeData, [key]: e.target.value })}
+                        className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
+                    )}
                   </label>
-                  <textarea
-                    rows={2}
-                    value={resumeData.summary}
-                    onChange={(e) => setResumeData({ ...resumeData, summary: e.target.value })}
-                    className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                  />
-                </div>
+                ))}
               </div>
             )}
 
             {/* 12. Certificate Maker Form */}
             {tool.id === 'certificate-maker' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Recipient Full Name
+                {[
+                  ['Recipient full name', 'recipientName'],
+                  ['Certificate title', 'title'],
+                  ['Reason / achievement', 'reason'],
+                  ['Issue date', 'date'],
+                  ['Issuing authority', 'issuer'],
+                ].map(([label, key]) => (
+                  <label key={key} className="block text-xs font-semibold text-slate-300">
+                    {label}
+                    <input type={key === 'date' ? 'date' : 'text'} value={certData[key as keyof typeof certData]}
+                      onChange={(e) => setCertData({ ...certData, [key]: e.target.value })}
+                      className="mt-1 w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm" />
                   </label>
-                  <input
-                    type="text"
-                    value={certData.recipientName}
-                    onChange={(e) => setCertData({ ...certData, recipientName: e.target.value })}
-                    className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Certificate Title
-                  </label>
-                  <input
-                    type="text"
-                    value={certData.title}
-                    onChange={(e) => setCertData({ ...certData, title: e.target.value })}
-                    className="w-full p-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-xs"
-                  />
-                </div>
+                ))}
               </div>
             )}
 
@@ -1205,11 +1357,12 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   ref={sigCanvasRef}
                   width={400}
                   height={130}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  className="w-full max-w-md h-32 rounded-xl bg-slate-950 border border-slate-700 cursor-crosshair shadow-inner"
+                  onPointerDown={startDrawing}
+                  onPointerMove={draw}
+                  onPointerUp={stopDrawing}
+                  onPointerCancel={stopDrawing}
+                  onPointerLeave={stopDrawing}
+                  className="w-full max-w-md h-32 rounded-xl bg-slate-950 border border-slate-700 cursor-crosshair shadow-inner touch-none"
                 />
               </div>
             )}

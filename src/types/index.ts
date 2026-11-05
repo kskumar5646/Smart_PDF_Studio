@@ -9,7 +9,7 @@ export type ToolCategory =
   | 'Image'
   | 'Utilities';
 
-export type InputFileType = 'pdf' | 'image' | 'multiple-pdf' | 'multiple-images' | 'text' | 'form' | 'none';
+export type InputFileType = 'pdf' | 'image' | 'multiple-pdf' | 'multiple-images' | 'word' | 'spreadsheet' | 'presentation' | 'text' | 'form' | 'none';
 
 export type OutputFileType = 'pdf' | 'image' | 'docx' | 'xlsx' | 'pptx' | 'txt' | 'zip' | 'svg' | 'info';
 
