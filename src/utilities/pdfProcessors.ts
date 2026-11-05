@@ -783,7 +783,7 @@ export async function transformImageFile(file: File, mode: 'resize' | 'convert' 
     const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Canvas is unavailable.');
     if (format === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
-    if (mode === 'crop') ctx.drawImage(img, 0, 0, w, h, 0, 0, w, h); else ctx.drawImage(img, 0, 0, w, h);
+    if (mode === 'crop') { const sx = Math.max(0, Math.floor((img.naturalWidth - w) / 2)); const sy = Math.max(0, Math.floor((img.naturalHeight - h) / 2)); ctx.drawImage(img, sx, sy, w, h, 0, 0, w, h); } else ctx.drawImage(img, 0, 0, w, h);
     return await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('Image encoding failed.')), format, quality));
   } finally { URL.revokeObjectURL(url); }
 }
