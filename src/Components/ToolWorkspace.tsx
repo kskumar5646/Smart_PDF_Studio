@@ -29,6 +29,7 @@ import {
   getPdfInformation,
   searchPdfText,
   transformImageFile,
+  organizePdfPages,
 } from '../utilities/pdfProcessors';
 import {
   ArrowLeft,
@@ -617,57 +618,15 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         return;
       }
 
-      // Page-level operations use 1-based page numbers entered as "1-3" or "1,3,5".
+      // Page-level operations: extract, remove, reorder, or duplicate actual PDF pages.
       if (['extract-pages', 'remove-pages', 'reorder-pages', 'duplicate-pages'].includes(tool.id)) {
         if (!files[0]) throw new Error('Please select a PDF file.');
-        const pdfDoc = await PDFDocument.load(await files[0].arrayBuffer());
-        const pageCount = pdfDoc.getPageCount();
-        const requested: number[] = [];
-        for (const part of splitRange.split(',')) {
-          const trimmed = part.trim();
-          const range = trimmed.match(/^(\d+)\s*-\s*(\d+)$/);
-          if (range) {
-            const first = Number(range[1]), last = Number(range[2]);
-            if (first < 1 || last < first || last > pageCount) throw new Error(`Enter a valid page range between 1 and ${pageCount}.`);
-            for (let n = first; n <= last; n++) requested.push(n);
-          } else if (/^\d+$/.test(trimmed)) {
-            const n = Number(trimmed);
-            if (n < 1 || n > pageCount) throw new Error(`Page numbers must be between 1 and ${pageCount}.`);
-            requested.push(n);
-          } else {
-            throw new Error('Use page numbers like 1,3,5 or a range like 2-6.');
-          }
-        }
-        if (!requested.length) throw new Error('Enter at least one page number.');
-        let output: PDFDocument;
-        if (tool.id === 'remove-pages') {
-          const remove = new Set(requested);
-          if (remove.size >= pageCount) throw new Error('You cannot remove every page from a PDF.');
-          for (const n of [...remove].sort((a, b) => b - a)) pdfDoc.removePage(n - 1);
-          output = pdfDoc;
-        } else {
-          output = await PDFDocument.create();
-          let pageNumbers: number[];
-          if (tool.id === 'reorder-pages') {
-            const unique = new Set(requested);
-            if (requested.length !== pageCount || unique.size !== pageCount) {
-              throw new Error(`To reorder pages, enter every page exactly once, for example 3,1,2 for a 3-page PDF.`);
-            }
-            pageNumbers = requested;
-          } else if (tool.id === 'duplicate-pages') {
-            const duplicateSet = new Set(requested);
-            pageNumbers = [];
-            for (let page = 1; page <= pageCount; page++) {
-              pageNumbers.push(page);
-              if (duplicateSet.has(page)) pageNumbers.push(page);
-            }
-          } else {
-            pageNumbers = [...new Set(requested)];
-          }
-          const copied = await output.copyPages(pdfDoc, pageNumbers.map((n) => n - 1));
-          copied.forEach((page) => output.addPage(page));
-        }
-        const blob = uint8ArrayToBlob(await output.save());
+        const operation = tool.id === 'extract-pages' ? 'extract'
+          : tool.id === 'remove-pages' ? 'remove'
+          : tool.id === 'reorder-pages' ? 'reorder' : 'duplicate';
+        setProcessingState(prev => ({ ...prev, progress: 45, stageMessage: 'Applying page changes to the PDF…' }));
+        const result = await organizePdfPages(files[0], operation, splitRange);
+        const blob = uint8ArrayToBlob(result.bytes);
         const url = URL.createObjectURL(blob);
         const prefixes: Record<string, string> = {
           'extract-pages': 'extracted',
@@ -675,10 +634,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           'reorder-pages': 'reordered',
           'duplicate-pages': 'duplicated',
         };
+        const actionLabel = operation === 'extract' ? 'Extracted' : operation === 'remove' ? 'Removed' : operation === 'reorder' ? 'Reordered' : 'Duplicated';
         setProcessingState({
           status: 'success',
           progress: 100,
-          stageMessage: `PDF pages processed successfully (${requested.join(', ')}).`,
+          stageMessage: `${actionLabel} selected page(s). Output contains ${result.outputPageCount} page(s).`,
           resultUrl: url,
           resultFileName: `${prefixes[tool.id]}_${files[0].name}`,
           originalSize: files[0].size,
