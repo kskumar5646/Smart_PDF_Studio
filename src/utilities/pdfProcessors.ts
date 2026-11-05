@@ -771,3 +771,19 @@ export async function searchPdfText(file: File, query: string): Promise<string> 
   } finally { await task.destroy(); }
   return matches.length ? matches.join('\n\n') : `No matches for "${query}" were found in selectable PDF text.`;
 }
+
+
+export async function transformImageFile(file: File, mode: 'resize' | 'convert' | 'crop', width: number, height: number, format: 'image/jpeg' | 'image/png' | 'image/webp', quality = 0.92): Promise<Blob> {
+  if (!file.type.startsWith('image/')) throw new Error('Please select a valid image file.');
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => { const value = new Image(); value.onload = () => resolve(value); value.onerror = () => reject(new Error('Image could not be decoded.')); value.src = url; });
+    const w = mode === 'resize' ? Math.max(1, Math.min(12000, Math.round(width))) : mode === 'crop' ? Math.max(1, Math.min(img.naturalWidth, Math.round(width))) : img.naturalWidth;
+    const h = mode === 'resize' ? Math.max(1, Math.min(12000, Math.round(height))) : mode === 'crop' ? Math.max(1, Math.min(img.naturalHeight, Math.round(height))) : img.naturalHeight;
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Canvas is unavailable.');
+    if (format === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+    if (mode === 'crop') ctx.drawImage(img, 0, 0, w, h, 0, 0, w, h); else ctx.drawImage(img, 0, 0, w, h);
+    return await new Promise<Blob>((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('Image encoding failed.')), format, quality));
+  } finally { URL.revokeObjectURL(url); }
+}
