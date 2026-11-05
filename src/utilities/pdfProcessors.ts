@@ -136,6 +136,84 @@ export async function splitPdfFile(
   return await splitDoc.save();
 }
 
+/**
+ * Apply page-level PDF operations using 1-based page numbers.
+ * pageExpression accepts values such as "1,3,5" or "2-4".
+ */
+export async function organizePdfPages(
+  file: File,
+  operation: 'extract' | 'remove' | 'reorder' | 'duplicate',
+  pageExpression: string
+): Promise<{ bytes: Uint8Array; sourcePageCount: number; outputPageCount: number; selectedPages: number[] }> {
+  const source = await PDFDocument.load(await file.arrayBuffer());
+  const sourcePageCount = source.getPageCount();
+  if (sourcePageCount < 1) throw new Error('The selected PDF contains no pages.');
+
+  const expression = pageExpression.trim();
+  if (!expression) throw new Error('Enter at least one page number.');
+  const parsed: number[] = [];
+  for (const token of expression.split(',')) {
+    const value = token.trim();
+    const range = value.match(/^(\\d+)\\s*-\\s*(\\d+)$/);
+    if (range) {
+      const first = Number(range[1]);
+      const last = Number(range[2]);
+      if (first < 1 || last < first || last > sourcePageCount) {
+        throw new Error(`Enter a valid page range between 1 and ${sourcePageCount}.`);
+      }
+      for (let page = first; page <= last; page++) parsed.push(page);
+    } else if (/^\\d+$/.test(value)) {
+      const page = Number(value);
+      if (page < 1 || page > sourcePageCount) {
+        throw new Error(`Page numbers must be between 1 and ${sourcePageCount}.`);
+      }
+      parsed.push(page);
+    } else {
+      throw new Error('Use page numbers like 1,3,5 or a range like 2-6. Do not leave empty entries.');
+    }
+  }
+
+  const selectedPages = [...new Set(parsed)];
+  if (operation === 'reorder') {
+    if (parsed.length !== sourcePageCount || selectedPages.length !== sourcePageCount) {
+      throw new Error(`To reorder pages, enter every page exactly once, for example 3,1,2 for a ${sourcePageCount}-page PDF.`);
+    }
+  } else if (parsed.length !== selectedPages.length) {
+    throw new Error('A page may be selected only once. Remove duplicate page numbers from your input.');
+  }
+
+  let output: PDFDocument;
+  if (operation === 'remove') {
+    if (selectedPages.length >= sourcePageCount) {
+      throw new Error('You cannot remove every page from a PDF.');
+    }
+    for (const page of [...selectedPages].sort((a, b) => b - a)) {
+      source.removePage(page - 1);
+    }
+    output = source;
+  } else {
+    output = await PDFDocument.create();
+    const pageOrder = operation === 'duplicate'
+      ? Array.from({ length: sourcePageCount }, (_, index) => {
+          const page = index + 1;
+          return selectedPages.includes(page) ? [page, page] : [page];
+        }).flat()
+      : operation === 'reorder'
+        ? parsed
+        : selectedPages;
+    const copiedPages = await output.copyPages(source, pageOrder.map(page => page - 1));
+    copiedPages.forEach(page => output.addPage(page));
+  }
+
+  const bytes = await output.save();
+  return {
+    bytes,
+    sourcePageCount,
+    outputPageCount: output.getPageCount(),
+    selectedPages,
+  };
+}
+
 // 5. Rotate PDF Pages
 export async function rotatePdfPages(
   file: File,
