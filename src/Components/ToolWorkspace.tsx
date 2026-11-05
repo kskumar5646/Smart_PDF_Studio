@@ -81,6 +81,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
   const [barcodeText, setBarcodeText] = useState<string>('STUDIO-98231');
   const [copiedText, setCopiedText] = useState(false);
   const [ocrLanguage, setOcrLanguage] = useState('eng');
+  const [pagesPerPart, setPagesPerPart] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form Tool States (Invoice, Resume, Certificate)
   const [invoiceData, setInvoiceData] = useState({
@@ -687,7 +689,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
       // Split a document into sequential files with N pages each.
       if (tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') {
         if (!files[0]) throw new Error('Please select a PDF file.');
-        const count = Number(splitRange.trim());
+        const count = pagesPerPart;
         if (!Number.isInteger(count) || count < 1) throw new Error('Enter a positive whole number of pages per output file.');
         const chunks = await splitPdfEveryNPages(files[0], count);
         const JSZip = (await import('jszip')).default;
@@ -709,7 +711,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
 
       if (tool.id === 'search-pdf') {
         if (!files[0]) throw new Error('Please select a PDF file.');
-        const query = splitRange.trim();
+        const query = searchQuery.trim();
         const text = await searchPdfText(files[0], query);
         setProcessingState({ status: 'success', progress: 100, stageMessage: 'PDF text search completed.', extractedText: text, resultFileName: 'pdf-search-results.txt', resultUrl: URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })) });
         return;
@@ -987,6 +989,18 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
               {t.settings}
             </h4>
 
+            {(tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') && (
+              <label className="block max-w-xs text-xs font-semibold text-slate-300">
+                Pages in each output PDF
+                <input type="number" min="1" max="500" value={pagesPerPart} onChange={e => setPagesPerPart(Math.max(1, Number(e.target.value) || 1))} className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white" />
+              </label>
+            )}
+            {tool.id === 'search-pdf' && (
+              <label className="block max-w-md text-xs font-semibold text-slate-300">
+                Word or phrase to find
+                <input type="search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Enter search text" className="mt-2 w-full p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white" />
+              </label>
+            )}
             {(tool.id === 'ocr-pdf' || tool.id === 'image-ocr') && (
               <div className="mb-5 max-w-sm">
                 <label className="block text-xs font-semibold text-slate-300 mb-2">OCR language</label>
