@@ -123,9 +123,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     if (tool.inputType === 'image' || tool.inputType === 'multiple-images') {
       return ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || /\.(jpg|jpeg|png|webp)$/i.test(name);
     }
-    if (tool.id === 'word-to-pdf') return /\.(doc|docx)$/i.test(name);
-    if (tool.id === 'excel-to-pdf') return /\.(xls|xlsx|csv)$/i.test(name);
-    if (tool.id === 'powerpoint-to-pdf') return /\.(ppt|pptx)$/i.test(name);
+    if (tool.inputType === 'word') return /\.(doc|docx)$/i.test(name);
+    if (tool.inputType === 'spreadsheet') return /\.(xls|xlsx|csv)$/i.test(name);
+    if (tool.inputType === 'presentation') return /\.(ppt|pptx)$/i.test(name);
     if (tool.inputType === 'text') return /\.(txt|html|md)$/i.test(name);
     return file.type === 'application/pdf' || name.endsWith('.pdf');
   };
@@ -819,7 +819,7 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   {tool.description}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2 text-[10px] font-semibold">
-                  <span className="px-2 py-1 rounded-md bg-slate-900 text-slate-300 border border-slate-700">Input: {tool.inputType === 'multiple-pdf' ? 'Multiple PDFs' : tool.inputType === 'multiple-images' ? 'Multiple images' : tool.inputType === 'pdf' ? 'PDF' : tool.inputType === 'image' ? 'Image' : tool.inputType === 'text' ? 'Text' : tool.inputType === 'form' ? 'Form' : 'None'}</span>
+                  <span className="px-2 py-1 rounded-md bg-slate-900 text-slate-300 border border-slate-700">Input: {tool.inputType === 'multiple-pdf' ? 'Multiple PDFs' : tool.inputType === 'multiple-images' ? 'Multiple images' : tool.inputType === 'pdf' ? 'PDF' : tool.inputType === 'image' ? 'Image' : tool.inputType === 'text' ? 'Text' : tool.inputType === 'form' ? 'Form' : tool.inputType === 'word' ? 'Word document' : tool.inputType === 'spreadsheet' ? 'Spreadsheet' : tool.inputType === 'presentation' ? 'Presentation' : 'None'}</span>
                   <span className="px-2 py-1 rounded-md bg-slate-900 text-cyan-300 border border-slate-700">Output: {tool.outputType.toUpperCase()}</span>
                 </div>
               </div>
@@ -852,11 +852,11 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                   accept={
                     tool.inputType === 'image' || tool.inputType === 'multiple-images'
                       ? 'image/jpeg,image/png,image/webp'
-                      : tool.id === 'word-to-pdf'
+                      : tool.inputType === 'word'
                       ? '.doc,.docx'
-                      : tool.id === 'excel-to-pdf'
+                      : tool.inputType === 'spreadsheet'
                       ? '.xls,.xlsx,.csv'
-                      : tool.id === 'powerpoint-to-pdf'
+                      : tool.inputType === 'presentation'
                       ? '.ppt,.pptx'
                       : tool.inputType === 'text'
                       ? '.txt,.html,.md'
@@ -874,8 +874,18 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                     {t.dragDropText}
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-400 mb-4">
-                    {tool.inputType.includes('image')
+                    {tool.inputType === 'image' || tool.inputType === 'multiple-images'
                       ? 'Supported formats: JPG, PNG, WEBP'
+                      : tool.inputType === 'word'
+                      ? 'Supported formats: DOC, DOCX'
+                      : tool.inputType === 'spreadsheet'
+                      ? 'Supported formats: XLS, XLSX, CSV'
+                      : tool.inputType === 'presentation'
+                      ? 'Supported formats: PPT, PPTX'
+                      : tool.inputType === 'text'
+                      ? 'Supported formats: TXT, HTML, MD'
+                      : tool.inputType === 'multiple-pdf'
+                      ? 'Supported format: PDF (select multiple files)'
                       : 'Supported format: Standard PDF'}
                   </p>
                   <label
