@@ -24,6 +24,10 @@ import {
   generateCertificatePdf,
   uint8ArrayToBlob,
   formatBytes,
+  renderPdfPages,
+  splitPdfEveryNPages,
+  getPdfInformation,
+  searchPdfText,
 } from '../utilities/pdfProcessors';
 import {
   ArrowLeft,
@@ -662,6 +666,52 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
           originalSize: files[0].size,
           resultSize: blob.size,
         });
+        return;
+      }
+
+      // Render PDF pages as PNG/JPG files and package them for one download.
+      if (tool.id === 'pdf-to-jpg' || tool.id === 'pdf-to-png') {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        setProcessingState(prev => ({ ...prev, progress: 35, stageMessage: 'Rendering PDF pages in your browser...' }));
+        const format = tool.id === 'pdf-to-jpg' ? 'jpg' : 'png';
+        const pages = await renderPdfPages(files[0], format);
+        const JSZip = (await import('jszip')).default;
+        const zip = new JSZip();
+        pages.forEach((blob, index) => zip.file(`page-${String(index + 1).padStart(3, '0')}.${format}`, blob));
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        setProcessingState({ status: 'success', progress: 100, stageMessage: `Rendered ${pages.length} PDF page(s) to ${format.toUpperCase()} images.`, resultUrl: url, resultFileName: `${files[0].name.replace(/\\.pdf$/i, '')}-${format}-pages.zip`, originalSize: files[0].size, resultSize: blob.size });
+        return;
+      }
+
+      // Split a document into sequential files with N pages each.
+      if (tool.id === 'pdf-split-by-count' || tool.id === 'split-every-n-pages') {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        const count = Number(splitRange.trim());
+        if (!Number.isInteger(count) || count < 1) throw new Error('Enter a positive whole number of pages per output file.');
+        const chunks = await splitPdfEveryNPages(files[0], count);
+        const JSZip = (await import('jszip')).default;
+        const zip = new JSZip();
+        chunks.forEach((blob, index) => zip.file(`part-${String(index + 1).padStart(3, '0')}.pdf`, blob));
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        setProcessingState({ status: 'success', progress: 100, stageMessage: `Created ${chunks.length} PDF part(s), up to ${count} pages each.`, resultUrl: url, resultFileName: `${files[0].name.replace(/\\.pdf$/i, '')}-split.zip`, originalSize: files[0].size, resultSize: blob.size });
+        return;
+      }
+
+      if (tool.id === 'pdf-info') {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        const info = await getPdfInformation(files[0]);
+        const text = Object.entries(info).map(([key, value]) => `${key}: ${value}`).join('\\n');
+        setProcessingState({ status: 'success', progress: 100, stageMessage: 'PDF information inspected successfully.', extractedText: text, resultFileName: 'pdf-information.txt', resultUrl: URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })) });
+        return;
+      }
+
+      if (tool.id === 'search-pdf') {
+        if (!files[0]) throw new Error('Please select a PDF file.');
+        const query = splitRange.trim();
+        const text = await searchPdfText(files[0], query);
+        setProcessingState({ status: 'success', progress: 100, stageMessage: 'PDF text search completed.', extractedText: text, resultFileName: 'pdf-search-results.txt', resultUrl: URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })) });
         return;
       }
 
